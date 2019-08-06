@@ -1,6 +1,8 @@
 from aiohttp import web
 
-from citizens.api import new_import, update_citizen
+from citizens.api import (
+    new_import, update_citizen, get_citizens
+)
 from citizens.storage import MongoStorage
 
 
@@ -9,7 +11,8 @@ def get_app():
     app.storage = MongoStorage({'db': 'citizens'})
     app.add_routes([
         web.post('/imports', new_import),
-        web.patch(r'/imports/{import_id:\d+}/citizens/{citizen_id:\d+}', update_citizen)
+        web.patch(r'/imports/{import_id:\d+}/citizens/{citizen_id:\d+}', update_citizen),
+        web.get(r'/imports/{import_id:\d+}/citizens', get_citizens)
     ])
     return app
 

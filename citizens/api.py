@@ -62,9 +62,8 @@ async def new_import(request):
 
 def get_one_citizen(storage, import_id, citizen_id):
     citizens = storage.get_citizens(import_id, {'citizen_id': citizen_id})
-    if isinstance(citizens, list):
-        citizens = iter(citizens)
-    return next(citizens)
+    assert len(citizens) == 1
+    return citizens[0]
 
 
 async def update_citizen(request):
@@ -101,3 +100,9 @@ async def update_citizen(request):
 
     updated_data = request.app.storage.update_citizen(import_id, citizen_id, new_data)
     return web.Response(content_type='application/json', body=json.dumps(updated_data))
+
+
+def get_citizens(request):
+    import_id = int(request.match_info['import_id'])
+    citizens = request.app.storage.get_citizens(import_id)
+    return web.Response(content_type='application/json', body=json.dumps(citizens))

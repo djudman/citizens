@@ -60,7 +60,11 @@ class MongoStorage(BaseStorage):
         query = query or {}
         collection_name = f'import_{import_id}'
         collection = self._db.get_collection(collection_name)
-        return collection.find(query)
+        results = []
+        for entry in collection.find(query):
+            del entry['_id']
+            results.append(entry)
+        return results
 
 
 class MemoryStorage(BaseStorage):
