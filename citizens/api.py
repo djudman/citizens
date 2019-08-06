@@ -60,9 +60,16 @@ async def new_import(request):
                         status=201)
 
 
+def get_one_citizen(storage, import_id, citizen_id):
+    citizens = storage.get_citizens(import_id, {'citizen_id': citizen_id})
+    if isinstance(citizens, list):
+        citizens = iter(citizens)
+    return next(citizens)
+
+
 async def update_citizen(request):
-    import_id = request.match_info['import_id']
-    citizen_id = request.match_info['citizen_id']
+    import_id = int(request.match_info['import_id'])
+    citizen_id = int(request.match_info['citizen_id'])
     citizen_data = await request.json()
     if not citizen_data:
         raise CitizensApiError('No citizen data')
@@ -71,24 +78,26 @@ async def update_citizen(request):
     editable_fields = {'name', 'gender', 'birth_date', 'relatives', 'town',
         'street', 'building', 'apartment'}
     new_data = {field: citizen_data[field] for field in editable_fields if field in citizen_data}
-    updated_data = request.app.storage.update_citizen(import_id, citizen_id, new_data)
 
+    # TODO: проверить корректность birth_date, если задано
     if 'relatives' in citizen_data:
-        old_relatives = []
-        received_relatives = []
+        old_data = get_one_citizen(request.app.storage, import_id, citizen_id)
+        old_relatives = old_data['relatives']
+        received_relatives = citizen_data['relatives']
         for cid in old_relatives:
             if cid not in received_relatives:
                 # NOTE: Удаляем на той стороне меня из relatives
-                data = request.app.storage.get_citizens(import_id, {'citizen_id': cid})
+                data = get_one_citizen(request.app.storage, import_id, cid)
                 if citizen_id in data['relatives']:
                     data['relatives'].remove(citizen_id)
-                request.app.storage.update_citizen(import_id, citizen_id, {'relatives': data['relatives']})
+                request.app.storage.update_citizen(import_id, cid, {'relatives': data['relatives']})
         for cid in received_relatives:
             if cid not in old_relatives:
                 # NOTE: Добавляем на той стороне меня в relatives
-                data = request.app.storage.get_citizens(import_id, {'citizen_id': cid})
+                data = get_one_citizen(request.app.storage, import_id, cid)
                 if citizen_id not in data['relatives']:
                     data['relatives'].append(citizen_id)
-                request.app.storage.update_citizen(import_id, citizen_id, {'relatives': data['relatives']})
+                request.app.storage.update_citizen(import_id, cid, {'relatives': data['relatives']})
 
+    updated_data = request.app.storage.update_citizen(import_id, citizen_id, new_data)
     return web.Response(content_type='application/json', body=json.dumps(updated_data))

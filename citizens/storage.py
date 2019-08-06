@@ -53,10 +53,14 @@ class MongoStorage(BaseStorage):
             {'$set': data},
             return_document=ReturnDocument.AFTER
         )
+        del updated_data['_id']
         return updated_data
 
     def get_citizens(self, import_id, query=None):
         query = query or {}
+        collection_name = f'import_{import_id}'
+        collection = self._db.get_collection(collection_name)
+        return collection.find(query)
 
 
 class MemoryStorage(BaseStorage):
@@ -71,17 +75,25 @@ class MemoryStorage(BaseStorage):
     def update_citizen(self, import_id, citizen_id, data):
         assert import_id in self._data
         new_data = {}
-        for citizen in self._data[import_id]:
-            if citizen['citizen_id'] == citizen_id: 
+        for index, citizen in enumerate(self._data[import_id]):
+            if citizen['citizen_id'] == citizen_id:
                 for field, value in citizen.items():
-                    new_data[k] = data.get(field, value)
+                    new_data[field] = data.get(field, value)
+                del self._data[import_id][index]
+                break
         self._data[import_id].append(new_data)
         return new_data
 
 
     def get_citizens(self, import_id, query=None):
-        return self._data[import_id]
-
-    def get_all(self):
-        return self._data
-
+        data = self._data[import_id]
+        if not query:
+            return data
+        results = []
+        for entry in data:
+            for k, v in query.items():
+                if entry.get(k) != v:
+                    break
+            else:
+                results.append(entry)
+        return results
