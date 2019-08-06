@@ -15,7 +15,7 @@ class TestImport(AioHTTPTestCase):
         return app
 
     @unittest_run_loop
-    async def test_update_citizen(self):
+    async def test_get_citizen(self):
         import_data = [
             {
                 "citizen_id": 1,
