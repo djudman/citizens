@@ -13,23 +13,23 @@ class InvalidImportData(CitizensApiError):
 
 
 def verify_citizen(data):
-    cid = citizen.get('citizen_id', '<no value>')  # Используется в сообщениях об ошибках
+    cid = data.get('citizen_id', '<no value>')  # Используется в сообщениях об ошибках
     # NOTE: тут можно было бы использовать dataclass
     fields = {('citizen_id', int), ('town', str), ('street', str),
               ('building', str), ('apartment', int), ('name', str),
               ('birth_date', str), ('gender', str), ('relatives', list)}
     for field, field_type in fields:
-        if field not in citizen:
+        if field not in data:
             raise InvalidImportData(f'Citizen `{cid}` has no field `{name}`')
-        value = citizen[field]
+        value = data[field]
         if not isinstance(value, field_type):
             expected_type = field_type.__name__
             real_type = type(value).__name__
-            err = f'Citizen `{cid}` has invalid type for field `{field}`. '
+            err = f'Citizen `{cid}` has invalid type for field `{field}`. '\
                   f'Expected `{type_name}`, got `{real_type}`)'
             raise InvalidImportData(err)
     try:
-        datetime.strptime(data['birth_date'])
+        datetime.strptime(data['birth_date'], '%d.%m.%Y')
     except ValueError as e:
         err = f'Invalid format of `birth_date` for citizen `{cid}`'
         raise InvalidImportData(err) from e
@@ -56,4 +56,39 @@ async def new_import(request):
         return web.Response(status=400)
     import_id = request.app.storage.new_import(import_data)
     out = {'data': {'import_id': import_id}}
-    return web.Response(body=json.dumps(out), status=201)
+    return web.Response(content_type='application/json', body=json.dumps(out),
+                        status=201)
+
+
+async def update_citizen(request):
+    import_id = request.match_info['import_id']
+    citizen_id = request.match_info['citizen_id']
+    citizen_data = await request.json()
+    if not citizen_data:
+        raise CitizensApiError('No citizen data')
+    if 'citizen_id' in citizen_data:
+        raise CitizensApiError('Field `citizen_id` is not allowed to change')
+    editable_fields = {'name', 'gender', 'birth_date', 'relatives', 'town',
+        'street', 'building', 'apartment'}
+    new_data = {field: citizen_data[field] for field in editable_fields if field in citizen_data}
+    updated_data = request.app.storage.update_citizen(import_id, citizen_id, new_data)
+
+    if 'relatives' in citizen_data:
+        old_relatives = []
+        received_relatives = []
+        for cid in old_relatives:
+            if cid not in received_relatives:
+                # NOTE: Удаляем на той стороне меня из relatives
+                data = request.app.storage.get_citizens(import_id, {'citizen_id': cid})
+                if citizen_id in data['relatives']:
+                    data['relatives'].remove(citizen_id)
+                request.app.storage.update_citizen(import_id, citizen_id, {'relatives': data['relatives']})
+        for cid in received_relatives:
+            if cid not in old_relatives:
+                # NOTE: Добавляем на той стороне меня в relatives
+                data = request.app.storage.get_citizens(import_id, {'citizen_id': cid})
+                if citizen_id not in data['relatives']:
+                    data['relatives'].append(citizen_id)
+                request.app.storage.update_citizen(import_id, citizen_id, {'relatives': data['relatives']})
+
+    return web.Response(content_type='application/json', body=json.dumps(updated_data))
