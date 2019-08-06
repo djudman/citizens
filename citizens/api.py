@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from itertools import groupby
 
 from aiohttp import web
 
@@ -20,13 +21,13 @@ def verify_citizen(data):
               ('birth_date', str), ('gender', str), ('relatives', list)}
     for field, field_type in fields:
         if field not in data:
-            raise InvalidImportData(f'Citizen `{cid}` has no field `{name}`')
+            raise InvalidImportData(f'Citizen `{cid}` has no field `{field}`')
         value = data[field]
         if not isinstance(value, field_type):
             expected_type = field_type.__name__
             real_type = type(value).__name__
             err = f'Citizen `{cid}` has invalid type for field `{field}`. '\
-                  f'Expected `{type_name}`, got `{real_type}`)'
+                  f'Expected `{expected_type}`, got `{real_type}`)'
             raise InvalidImportData(err)
     try:
         datetime.strptime(data['birth_date'], '%d.%m.%Y')
@@ -106,3 +107,22 @@ def get_citizens(request):
     import_id = int(request.match_info['import_id'])
     citizens = request.app.storage.get_citizens(import_id)
     return web.Response(content_type='application/json', body=json.dumps(citizens))
+
+
+def get_presents_by_month(request):
+    import_id = int(request.match_info['import_id'])
+    citizens = request.app.storage.get_citizens(import_id)
+    presents_by_month = {month: [] for month in range(1, 13)}
+    for citizen in citizens:
+        relatives_birthdays = []
+        for cid in citizen['relatives']:
+            relative_data = get_one_citizen(request.app.storage, import_id, cid)
+            dt = datetime.strptime(relative_data['birth_date'], '%d.%m.%Y')
+            relatives_birthdays.append(dt)
+        for month, dates in groupby(relatives_birthdays, key=lambda date: date.month):
+            presents_by_month[month].append({
+                'citizen_id': citizen['citizen_id'],
+                'presents': len(list(dates)),
+            })
+    out = {'data': presents_by_month}
+    return web.Response(content_type='application/json', body=json.dumps(out))
