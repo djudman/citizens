@@ -5,9 +5,9 @@ from aiohttp.test_utils import unittest_run_loop
 from tests.utils import CitizensApiTestCase
 
 
-class TestImport(CitizensApiTestCase):
+class TestGetAgePercentiles(CitizensApiTestCase):
     @unittest_run_loop
-    async def test_get_citizen(self):
+    async def test_get_percentiles(self):
         import_id = await self.import_data([
             {
                 "citizen_id": 1,

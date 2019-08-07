@@ -1,4 +1,5 @@
 import json
+from json.decoder import JSONDecodeError
 
 from aiohttp.test_utils import AioHTTPTestCase
 
@@ -17,7 +18,10 @@ class CitizensApiTestCase(AioHTTPTestCase):
             data = json.dumps(data)
         response = await self.client.request(http_method, uri, data=data)
         data = await response.read()
-        data = json.loads(data) if data else None
+        try:
+            data = json.loads(data) if data else None
+        except JSONDecodeError as e:
+            raise Exception(f'Invalid JSON: {data}') from e
         return response.status, data
 
     async def import_data(self, data):

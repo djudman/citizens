@@ -5,9 +5,9 @@ from aiohttp.test_utils import unittest_run_loop
 from tests.utils import CitizensApiTestCase
 
 
-class TestImport(CitizensApiTestCase):
+class TestGetPresentsByMonth(CitizensApiTestCase):
     @unittest_run_loop
-    async def test_get_presents_by_month(self):
+    async def test_citizen_birthdays(self):
         import_id = await self.import_data([
             {
                 "citizen_id": 1,

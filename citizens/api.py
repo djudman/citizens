@@ -46,6 +46,8 @@ def verify_import(data):
         relatives_map[cid] = citizen_data['relatives']
     for cid, relatives in relatives_map.items():
         for relative_cid in relatives:
+            if relative_cid not in relatives_map:
+                raise InvalidImportData(f'Citizen `{cid}` not found in import data')
             if cid not in relatives_map[relative_cid]:
                 raise InvalidImportData(f'Invalid relatives for `{cid}`')
 

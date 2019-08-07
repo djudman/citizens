@@ -46,4 +46,89 @@ class TestImport(CitizensApiTestCase):
         self.assertEquals(citizens[1]['citizen_id'], 2)
         self.assertEquals(citizens[1]['name'], 'Иванов Иван Иванович')
 
-    # TODO: test invalid data cases
+    @unittest_run_loop
+    async def test_birth_date_invalid_format(self):
+        import_data = [
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "17-04-1997",
+                "gender": "male",
+                "relatives": []
+            },
+        ]
+        status, data = await self.api_request('POST', '/imports', import_data)
+        self.assertEquals(status, 400)
+        self.assertIsNone(data)
+
+    @unittest_run_loop
+    async def test_birth_date_is_not_exists(self):
+        import_data = [
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "30.02.1997",
+                "gender": "male",
+                "relatives": []
+            },
+        ]
+        status, data = await self.api_request('POST', '/imports', import_data)
+        self.assertEquals(status, 400)
+        self.assertIsNone(data)
+
+    @unittest_run_loop
+    async def test_relative_not_found_in_import(self):
+        import_data = [
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "01.02.1997",
+                "gender": "male",
+                "relatives": [2]
+            },
+        ]
+        status, data = await self.api_request('POST', '/imports', import_data)
+        self.assertEquals(status, 400)
+        self.assertIsNone(data)
+
+    @unittest_run_loop
+    async def test_relative_is_not_mutual(self):
+        import_data = [
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "01.02.1997",
+                "gender": "male",
+                "relatives": [2]
+            },
+            {
+                "citizen_id": 2,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "01-02-1997",
+                "gender": "male",
+                "relatives": [3]
+            },
+        ]
+        status, data = await self.api_request('POST', '/imports', import_data)
+        self.assertEquals(status, 400)
+        self.assertIsNone(data)

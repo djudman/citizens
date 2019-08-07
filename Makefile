@@ -3,4 +3,4 @@ all:
 install:
 	pip install -r requirements.txt
 test:
-	cd tests && python run.py
+	@cd tests && python run.py
