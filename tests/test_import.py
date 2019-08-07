@@ -124,7 +124,7 @@ class TestImport(CitizensApiTestCase):
                 "building": "16к7стр5",
                 "apartment": 7,
                 "name": "Иванов Сергей Иванович",
-                "birth_date": "01-02-1997",
+                "birth_date": "02.02.1997",
                 "gender": "male",
                 "relatives": [3]
             },
