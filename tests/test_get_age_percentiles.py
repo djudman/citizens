@@ -54,7 +54,7 @@ class TestGetAgePercentiles(CitizensApiTestCase):
                 "relatives": []
             },
             {
-                "citizen_id": 4,
+                "citizen_id": 5,
                 "town": "Санкт-Петербург",
                 "street": "Льва Толстого",
                 "building": "16к7стр5",
