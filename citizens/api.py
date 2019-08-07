@@ -102,13 +102,15 @@ async def update_citizen(request):
                 request.app.storage.update_citizen(import_id, cid, {'relatives': data['relatives']})
 
     updated_data = request.app.storage.update_citizen(import_id, citizen_id, new_data)
-    return web.Response(content_type='application/json', body=json.dumps(updated_data))
+    out = {'data': updated_data}
+    return web.Response(content_type='application/json', body=json.dumps(out))
 
 
 def get_citizens(request):
     import_id = int(request.match_info['import_id'])
     citizens = request.app.storage.get_citizens(import_id)
-    return web.Response(content_type='application/json', body=json.dumps(citizens))
+    out = {'data': citizens}
+    return web.Response(content_type='application/json', body=json.dumps(out))
 
 
 def get_presents_by_month(request):

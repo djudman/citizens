@@ -16,6 +16,9 @@ class BaseStorage(ABC):
     def get_citizens(self, import_id):
         pass
 
+    def close(self):
+        pass
+
 
 class MongoStorage(BaseStorage):
     def __init__(self, config):
@@ -65,6 +68,9 @@ class MongoStorage(BaseStorage):
             del entry['_id']
             results.append(entry)
         return results
+
+    def close(self):
+        self._driver.close()
 
 
 class MemoryStorage(BaseStorage):

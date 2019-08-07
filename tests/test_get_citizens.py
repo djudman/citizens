@@ -1,22 +1,14 @@
-from aiohttp import web
-from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
-
 import json
 
-from citizens.api import new_import
-from citizens.main import get_app
-from citizens.storage import MemoryStorage
+from aiohttp.test_utils import unittest_run_loop
+
+from tests.utils import CitizensApiTestCase
 
 
-class TestImport(AioHTTPTestCase):
-    async def get_application(self):
-        app = get_app()
-        app.storage = MemoryStorage()
-        return app
-
+class TestImport(CitizensApiTestCase):
     @unittest_run_loop
     async def test_get_citizen(self):
-        import_data = [
+        import_id = await self.import_data([
             {
                 "citizen_id": 1,
                 "town": "Москва",
@@ -39,15 +31,16 @@ class TestImport(AioHTTPTestCase):
                 "gender": "male",
                 "relatives": [1]
             }
-        ]
-        response = await self.client.request('POST', '/imports',
-            data=json.dumps(import_data))
-        data = await response.json()
-        import_id = data['data']['import_id']
-        response = await self.client.request('GET', f'/imports/{import_id}/citizens')
-        self.assertEquals(response.status, 200)
-        citizens = await response.json()
+        ])
+        status, data = await self.api_request('GET', f'/imports/{import_id}/citizens')
+        self.assertEquals(status, 200)
+        self.assertIsNotNone(data)
+        self.assertIn('data', data)
+
+        citizens = data['data']
+        self.assertIsInstance(citizens, list)
         self.assertEquals(len(citizens), 2)
+
         self.assertEquals(citizens[0]['citizen_id'], 1)
         self.assertEquals(citizens[0]['apartment'], 7)
         self.assertEquals(citizens[0]['birth_date'], '17.04.1997')
@@ -57,4 +50,3 @@ class TestImport(AioHTTPTestCase):
         self.assertEquals(citizens[1]['apartment'], 8)
         self.assertEquals(citizens[1]['birth_date'], '07.05.1987')
         self.assertEquals(len(citizens[1]['relatives']), 1)
-

@@ -7,7 +7,7 @@ from citizens.api import (
 from citizens.storage import MongoStorage
 
 
-def get_app():
+def create_app():
     app = web.Application()
     app.storage = MongoStorage({'db': 'citizens'})
     app.add_routes([
@@ -20,6 +20,11 @@ def get_app():
     return app
 
 
+async def shutdown(app):
+    app.storage.close()
+
+
 if __name__ == '__main__':
-    app = get_app()
+    app = create_app()
+    app.on_cleanup.append(shutdown)
     web.run_app(app, port=8888)

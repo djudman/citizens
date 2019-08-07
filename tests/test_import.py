@@ -1,19 +1,9 @@
-from aiohttp import web
-from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
+from aiohttp.test_utils import unittest_run_loop
 
-import json
-
-from citizens.api import new_import
-from citizens.main import get_app
-from citizens.storage import MemoryStorage
+from tests.utils import CitizensApiTestCase
 
 
-class TestImport(AioHTTPTestCase):
-    async def get_application(self):
-        app = get_app()
-        app.storage = MemoryStorage()
-        return app
-
+class TestImport(CitizensApiTestCase):
     @unittest_run_loop
     async def test_save_import(self):
         import_data = [
@@ -40,12 +30,20 @@ class TestImport(AioHTTPTestCase):
                 "relatives": [1]
             }
         ]
-        response = await self.client.request(
-            'POST', '/imports', data=json.dumps(import_data))
-        self.assertTrue(response.status == 201)
-        data = await response.json()
+        status, data = await self.api_request('POST', '/imports', import_data)
+        self.assertEquals(status, 201)
+        self.assertIsNotNone(data)
+        self.assertIn('data', data)
+        self.assertIn('import_id', data['data'])
         import_id = data['data']['import_id']
         self.assertIsNotNone(import_id)
+        self.assertIsInstance(import_id, int)
+
         citizens = self.app.storage.get_citizens(import_id)
         self.assertEquals(citizens[0]['citizen_id'], 1)
+        self.assertEquals(citizens[0]['name'], 'Иванов Сергей Иванович')
+
         self.assertEquals(citizens[1]['citizen_id'], 2)
+        self.assertEquals(citizens[1]['name'], 'Иванов Иван Иванович')
+
+    # TODO: test invalid data cases

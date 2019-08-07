@@ -1,21 +1,14 @@
-from aiohttp import web
-from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
-
 import json
 
-from citizens.main import get_app
-from citizens.storage import MemoryStorage
+from aiohttp.test_utils import unittest_run_loop
+
+from tests.utils import CitizensApiTestCase
 
 
-class TestImport(AioHTTPTestCase):
-    async def get_application(self):
-        app = get_app()
-        app.storage = MemoryStorage()
-        return app
-
+class TestImport(CitizensApiTestCase):
     @unittest_run_loop
     async def test_get_citizen(self):
-        import_data = [
+        import_id = await self.import_data([
             {
                 "citizen_id": 1,
                 "town": "Москва",
@@ -71,20 +64,22 @@ class TestImport(AioHTTPTestCase):
                 "gender": "male",
                 "relatives": []
             }
-        ]
-        response = await self.client.request('POST', '/imports',
-            data=json.dumps(import_data))
-        data = await response.json()
-        import_id = data['data']['import_id']
-        response = await self.client.request('GET', f'/imports/{import_id}/towns/stat/percentile/age')
-        data = await response.json()
-        self.assertEquals(len(data['data']), 2)
-        self.assertEquals(data['data'][0]['town'], 'Москва')
-        self.assertEquals(data['data'][0]['p50'], 30)
-        self.assertEquals(data['data'][0]['p75'], 35)
-        self.assertEquals(data['data'][0]['p99'], 39)
+        ])
+        status, data = await self.api_request('GET', f'/imports/{import_id}/towns/stat/percentile/age')
+        self.assertEquals(status, 200)
+        self.assertIsNotNone(data)
+        self.assertIn('data', data)
 
-        self.assertEquals(data['data'][1]['town'], 'Санкт-Петербург')
-        self.assertEquals(data['data'][1]['p50'], 65)
-        self.assertEquals(data['data'][1]['p75'], 67)
-        self.assertEquals(data['data'][1]['p99'], 69)
+        stat = data['data']
+        self.assertIsInstance(stat, list)
+        self.assertEquals(len(stat), 2)
+
+        self.assertEquals(stat[0]['town'], 'Москва')
+        self.assertEquals(stat[0]['p50'], 30)
+        self.assertEquals(stat[0]['p75'], 35)
+        self.assertEquals(stat[0]['p99'], 39)
+
+        self.assertEquals(stat[1]['town'], 'Санкт-Петербург')
+        self.assertEquals(stat[1]['p50'], 65)
+        self.assertEquals(stat[1]['p75'], 67)
+        self.assertEquals(stat[1]['p99'], 69)
