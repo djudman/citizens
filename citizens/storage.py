@@ -48,6 +48,11 @@ class MongoStorage(BaseStorage):
         collection.insert_many(data)
         return import_id
 
+    def delete_import(self, import_id):
+        collection_name = f'import_{import_id}'
+        collection = self._db.get_collection(collection_name)
+        collection.drop()
+
     def update_citizen(self, import_id, citizen_id, data):
         collection_name = f'import_{import_id}'
         collection = self._db.get_collection(collection_name)
