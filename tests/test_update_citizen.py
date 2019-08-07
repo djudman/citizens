@@ -63,3 +63,72 @@ class TestUpdateCitizen(CitizensApiTestCase):
         self.assertEquals(citizens[1]['birth_date'], '07.05.1987')
         self.assertEquals(len(citizens[1]['relatives']), 0)
 
+    @unittest_run_loop
+    async def test_birth_date_invalid_format(self):
+        import_id = await self.import_data([
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "17.04.1997",
+                "gender": "male",
+                "relatives": []
+            }
+        ])
+
+        new_data = {
+            'apartment': 777,
+            'birth_date': '18/04/1997',
+        }
+        status, data = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
+        self.assertEquals(status, 400)
+        self.assertIsNone(data)
+
+    @unittest_run_loop
+    async def test_not_mutual_relatives(self):
+        import_id = await self.import_data([
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "17.04.1997",
+                "gender": "male",
+                "relatives": []
+            }
+        ])
+
+        new_data = {
+            'relatives': [2],
+        }
+        status, data = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
+        self.assertEquals(status, 400)
+        self.assertIsNone(data)
+
+    @unittest_run_loop
+    async def test_self_in_relatives(self):
+        import_id = await self.import_data([
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "17.04.1997",
+                "gender": "male",
+                "relatives": []
+            }
+        ])
+
+        new_data = {
+            'relatives': [1],
+        }
+        status, data = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
+        self.assertEquals(status, 400)
+        self.assertIsNone(data)

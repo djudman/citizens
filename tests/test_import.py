@@ -132,3 +132,42 @@ class TestImport(CitizensApiTestCase):
         status, data = await self.api_request('POST', '/imports', import_data)
         self.assertEquals(status, 400)
         self.assertIsNone(data)
+
+    @unittest_run_loop
+    async def test_not_unique_citizen_id(self):
+        import_data = [
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "01.02.1997",
+                "gender": "male",
+                "relatives": []
+            },
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 8,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "02.02.1997",
+                "gender": "male",
+                "relatives": []
+            }
+        ]
+        status, data = await self.api_request('POST', '/imports', import_data)
+        self.assertEquals(status, 400)
+        self.assertIsNone(data)
+
+
+    # TODO: test_town_is_empty
+    # TODO: test_street_is_empty
+    # TODO: test_building_is_empty
+    # TODO: test_apartment_is_not_number
+    # TODO: test_name_is_empty
+    # TODO: test_gender_invalid_value
+    # TODO: test_self_in_relatives

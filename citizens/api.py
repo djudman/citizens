@@ -31,12 +31,17 @@ def verify_citizen(data):
             err = f'Citizen `{cid}` has invalid type for field `{field}`. '\
                   f'Expected `{expected_type}`, got `{real_type}`)'
             raise InvalidImportData(err)
+    verify_birth_date(data)
+    return cid
+
+
+def verify_birth_date(citizen_data):
     try:
-        datetime.strptime(data['birth_date'], '%d.%m.%Y')
+        datetime.strptime(citizen_data['birth_date'], '%d.%m.%Y')
     except ValueError as e:
+        cid = citizen_data.get('citizen_id', '<no value>')
         err = f'Invalid format of `birth_date` for citizen `{cid}`'
         raise InvalidImportData(err) from e
-    return cid
 
 
 def verify_import(data):
@@ -71,19 +76,28 @@ def get_one_citizen(storage, import_id, citizen_id):
     return citizens[0]
 
 
-async def update_citizen(request):
-    import_id = int(request.match_info['import_id'])
-    citizen_id = int(request.match_info['citizen_id'])
-    citizen_data = await request.json()
+def validate_citizen_data(citizen_data):
     if not citizen_data:
         raise CitizensApiError('No citizen data')
     if 'citizen_id' in citizen_data:
         raise CitizensApiError('Field `citizen_id` is not allowed to change')
+    verify_birth_date(citizen_data)
     editable_fields = {'name', 'gender', 'birth_date', 'relatives', 'town',
         'street', 'building', 'apartment'}
     new_data = {field: citizen_data[field] for field in editable_fields if field in citizen_data}
+    return new_data
 
-    # TODO: проверить корректность birth_date, если задано
+
+async def update_citizen(request):
+    import_id = int(request.match_info['import_id'])
+    citizen_id = int(request.match_info['citizen_id'])
+    citizen_data = await request.json()
+    try:
+        new_data = validate_citizen_data(citizen_data)
+    except CitizensApiError:
+        # TODO: логировать ошибки в файл
+        return web.Response(status=400)
+
     if 'relatives' in citizen_data:
         old_data = get_one_citizen(request.app.storage, import_id, citizen_id)
         old_relatives = old_data['relatives']
