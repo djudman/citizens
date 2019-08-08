@@ -7,7 +7,7 @@ from itertools import groupby
 from aiohttp import web
 
 from citizens.data import (
-    validate_import_data, validate_citizen_data, InvalidImportData
+    validate_import_data, validate_citizen_data, DataValidationError
 )
 
 
@@ -19,7 +19,7 @@ async def new_import(request):
     import_data = await request.json()
     try:
         validate_import_data(import_data)
-    except InvalidImportData as e:
+    except DataValidationError as e:
         # TODO: логировать ошибки в файл
         return web.Response(status=400)
     import_id = request.app.storage.new_import(import_data)
@@ -28,23 +28,16 @@ async def new_import(request):
                         status=201)
 
 
-def get_one_citizen(storage, import_id, citizen_id):
-    citizens = storage.get_citizens(import_id, {'citizen_id': citizen_id})
-    if len(citizens) == 1:
-        return citizens[0]
-    raise CitizensApiError('Expected 1 entry. Got {0}'.format(len(citizens)))
-
-
 async def update_citizen(request):
     import_id = int(request.match_info['import_id'])
     citizen_id = int(request.match_info['citizen_id'])
     citizen_data = await request.json()
     try:
         if 'citizen_id' in citizen_data:
-            raise InvalidImportData('citizen_id cannot be updated')
+            raise DataValidationError('citizen_id cannot be updated')
         citizen_data['citizen_id'] = citizen_id
         new_data = validate_citizen_data(citizen_data, all_fields_required=False)
-    except InvalidImportData:
+    except DataValidationError:
         # TODO: логировать ошибки в файл
         return web.Response(status=400)
 
@@ -121,3 +114,10 @@ def get_age_percentiles(request):
         })
     out = {'data': age_percentiles}
     return web.Response(content_type='application/json', body=json.dumps(out))
+
+
+def get_one_citizen(storage, import_id, citizen_id):
+    citizens = storage.get_citizens(import_id, {'citizen_id': citizen_id})
+    if len(citizens) == 1:
+        return citizens[0]
+    raise CitizensApiError('Expected 1 entry. Got {0}'.format(len(citizens)))

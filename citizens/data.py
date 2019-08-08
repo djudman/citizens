@@ -1,69 +1,17 @@
 from datetime import datetime
 from typing import List
 
-__all__ = ['validate_import_data']
 
-class InvalidImportData(Exception):
+class DataValidationError(Exception):
     pass
 
 
-class InvalidCitizenData(InvalidImportData):
+class CitizenValidationError(DataValidationError):
     pass
 
 
-class InvalidValue(InvalidCitizenData):
+class FieldValidationError(CitizenValidationError):
     pass
-
-
-class Field:
-    def __init__(self, *, required=True, value_type=object):
-        self.required = required
-        self._value_type = value_type
-
-    def validate(self, value):
-        self._check_type(value)
-
-    def _check_type(self, value):
-        if isinstance(value, self._value_type):
-            return
-        expected_type_name = self._value_type.__name__
-        type_name = type(value).__name__
-        raise InvalidValue(f'Invalid type. Expected `{expected_type_name}`, '\
-                           f'got `{type_name}`.')
-
-
-class String(Field):
-    def __init__(self, *, min_length=0, values=None, letter_or_digit_required=False):
-        super().__init__(value_type=str)
-        self._min_length = min_length
-        self._letter_or_digit_required = letter_or_digit_required
-        self._values = values
-
-    def validate(self, value):
-        super().validate(value)
-        if len(value) < self._min_length:
-            raise InvalidValue('Invalid length')
-        if self._letter_or_digit_required and not self._has_letter_or_digit(value):
-            raise InvalidValue('At least one digit or letter required.')
-        if self._values is not None and value not in self._values:
-            raise InvalidValue('Unexpected value.')
-
-    def _has_letter_or_digit(self, value):
-        return any(map(lambda s: s.isdigit() or s.isalpha(), value))
-
-
-class ListOf(Field):
-    def __init__(self, inner_type, unique=False):
-        super().__init__(value_type=list)
-        self._inner_type = inner_type
-        self._unique = unique
-
-    def validate(self, value):
-        super().validate(value)
-        if any(not isinstance(element, self._inner_type) for element in value):
-            raise InvalidValue('Invalid element type.')
-        if self._unique and len(value) > len(set(value)):
-            raise InvalidValue('All elements must be unique.')
 
 
 def validate_import_data(data):
@@ -75,7 +23,7 @@ def validate_import_data(data):
         cid = citizen['citizen_id']
         # Если уже встречали этот id, значит он не уникальный в этой выборке
         if cid in relatives_by_cid:
-            raise InvalidImportData(f'Non unique citizen_id `{cid}`')
+            raise DataValidationError(f'Non unique citizen_id `{cid}`')
         relatives_by_cid[cid] = set(citizen['relatives'])
         # Собираем id родственников, которых еще не встречали в выборке.
         # Потенциально их может не оказаться вообще
@@ -89,13 +37,13 @@ def validate_import_data(data):
     # Если после перебора всех жителей у нас остались не найденные родственники, ошибка
     if non_existent_relatives:
         cnt = len(non_existent_relatives)
-        raise InvalidImportData(f'There are {cnt} non existent relatives')
+        raise DataValidationError(f'There are {cnt} non existent relatives')
     # Проверяем родственные связи. Второй раз проходим по всем. TODO: подумать
     # может всё-таки как-то можно ужать в один проход?
     for cid, relatives in relatives_by_cid.items():
         for relative_cid in relatives:
             if cid not in relatives_by_cid[relative_cid]:
-                raise InvalidImportData(f'Invalid relatives for `{cid}`')
+                raise DataValidationError(f'Invalid relatives for `{cid}`')
 
 
 def validate_citizen_data(data, all_fields_required=True):
@@ -112,18 +60,26 @@ def validate_citizen_data(data, all_fields_required=True):
         'gender': String(values=('male', 'female')),
         'relatives': ListOf(int, unique=True),
     }
-    for name, field in fields.items():
-        if all_fields_required and name not in data:
-            raise InvalidCitizenData(f'Attribute {name} not found')
-        # TODO: А если придет "лишний" атрибут? Считать ошибкой?
-        if name in data:
-            value = data[name]
-            field.validate(value)
+    # TODO: как-то не очень, придумать получше
+    if all_fields_required and len(fields) != len(data):
+        raise CitizenValidationError('Invalid fields set.')
+    validated_data = {}
+    for name, value in data.items():
+        if value is None:
+            raise CitizenValidationError('Value cannot be null.')
+        if name not in fields:
+            # NOTE: считаем лишний атрибут ошибкой
+            raise CitizenValidationError(f'Unknown field `{name}`.')
+        try:
+            fields[name].validate(value)
+        except FieldValidationError as e:
+            raise CitizenValidationError(f'Invalid value for `{name}`.') from e
+        validated_data[name] = value
     if 'relatives' in data and data['citizen_id'] in data['relatives']:
-        raise InvalidCitizenData('Self in relatives')
+        raise CitizenValidationError('Self in relatives')
     if 'birth_date' in data:
         _validate_birth_date(data)
-    return data
+    return validated_data
 
 
 def _validate_birth_date(citizen_data):
@@ -132,4 +88,58 @@ def _validate_birth_date(citizen_data):
     except ValueError as e:
         cid = citizen_data.get('citizen_id', '<no value>')
         err = f'Invalid format of `birth_date` for citizen `{cid}`'
-        raise InvalidValue(err) from e
+        raise FieldValidationError(err) from e
+
+
+class Field:
+    def __init__(self, *, required=True, value_type=object):
+        self.required = required
+        self._value_type = value_type
+
+    def validate(self, value):
+        self._check_type(value)
+
+    def _check_type(self, value):
+        if isinstance(value, self._value_type):
+            return
+        expected_type_name = self._value_type.__name__
+        type_name = type(value).__name__
+        raise FieldValidationError('Invalid value type. '\
+            f'Expected `{expected_type_name}`, got `{type_name}`.')
+
+
+class String(Field):
+    def __init__(self, *, min_length=0, values=None, letter_or_digit_required=False):
+        super().__init__(value_type=str)
+        self._min_length = min_length
+        self._letter_or_digit_required = letter_or_digit_required
+        self._values = values
+
+    def validate(self, value):
+        super().validate(value)
+        if self._min_length is not None and len(value) < self._min_length:
+            raise FieldValidationError('Too short value. '
+                'Minimum {0} symbols expected.'.format(self._min_length))
+        if self._letter_or_digit_required and not self.has_letter_or_digit(value):
+            raise FieldValidationError('At least one digit or letter required.')
+        if self._values is not None and value not in self._values:
+            possible_values = ', '.join(self._values)
+            raise FieldValidationError('Unexpected value. '\
+                f'Possible values: {possible_values}')
+
+    def has_letter_or_digit(self, value):
+        return any(map(lambda s: s.isdigit() or s.isalpha(), value))
+
+
+class ListOf(Field):
+    def __init__(self, element_type, unique=False):
+        super().__init__(value_type=list)
+        self._element_type = element_type
+        self._unique = unique
+
+    def validate(self, value):
+        super().validate(value)
+        if any(not isinstance(element, self._element_type) for element in value):
+            raise FieldValidationError('Invalid element type.')
+        if self._unique and len(value) != len(set(value)):
+            raise FieldValidationError('All elements must be unique.')
