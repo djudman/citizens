@@ -17,12 +17,13 @@ class CitizensApiTestCase(AioHTTPTestCase):
         if data is not None:
             data = json.dumps(data)
         response = await self.client.request(http_method, uri, data=data)
-        data = await response.read()
+        response_data = await response.read()
         try:
-            data = json.loads(data) if data else None
+            if response.status in (200, 201) and response_data:
+                response_data = json.loads(response_data)
         except JSONDecodeError as e:
-            raise Exception(f'Invalid JSON: {data}') from e
-        return response.status, data
+            raise Exception(f'Invalid JSON: {response_data}') from e
+        return response.status, response_data
 
     async def import_data(self, data):
         _, data = await self.api_request('POST', '/imports', data)

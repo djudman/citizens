@@ -16,11 +16,7 @@ class CitizensApiError(Exception):
 
 async def new_import(request):
     import_data = await request.json()
-    try:
-        validate_import_data(import_data)
-    except DataValidationError as e:
-        # TODO: логировать ошибки в файл
-        return web.Response(status=400)
+    validate_import_data(import_data)
     import_id = request.app.storage.new_import(import_data)
     out = {'data': {'import_id': import_id}}
     return web.json_response(data=out, status=201)
@@ -30,14 +26,10 @@ async def update_citizen(request):
     import_id = int(request.match_info['import_id'])
     citizen_id = int(request.match_info['citizen_id'])
     citizen_data = await request.json()
-    try:
-        if 'citizen_id' in citizen_data:
-            raise DataValidationError('citizen_id cannot be updated')
-        citizen_data['citizen_id'] = citizen_id
-        new_data = validate_citizen_data(citizen_data, all_fields_required=False)
-    except DataValidationError:
-        # TODO: логировать ошибки в файл
-        return web.Response(status=400)
+    if 'citizen_id' in citizen_data:
+        raise DataValidationError('citizen_id cannot be updated')
+    citizen_data['citizen_id'] = citizen_id
+    new_data = validate_citizen_data(citizen_data, all_fields_required=False)
 
     try:
         if 'relatives' in citizen_data:

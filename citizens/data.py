@@ -75,8 +75,6 @@ def validate_citizen_data(data, all_fields_required=True):
         except FieldValidationError as e:
             raise CitizenValidationError(f'Invalid value for `{name}`.') from e
         validated_data[name] = value
-    if 'relatives' in data and data['citizen_id'] in data['relatives']:
-        raise CitizenValidationError('Self in relatives')
     if 'birth_date' in data:
         _validate_birth_date(data)
     return validated_data

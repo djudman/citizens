@@ -63,7 +63,6 @@ class TestImport(CitizensApiTestCase):
         ]
         status, data = await self.api_request('POST', '/imports', import_data)
         self.assertEquals(status, 400)
-        self.assertIsNone(data)
 
     @unittest_run_loop
     async def test_birth_date_is_not_exists(self):
@@ -82,7 +81,6 @@ class TestImport(CitizensApiTestCase):
         ]
         status, data = await self.api_request('POST', '/imports', import_data)
         self.assertEquals(status, 400)
-        self.assertIsNone(data)
 
     @unittest_run_loop
     async def test_relative_not_found_in_import(self):
@@ -101,7 +99,6 @@ class TestImport(CitizensApiTestCase):
         ]
         status, data = await self.api_request('POST', '/imports', import_data)
         self.assertEquals(status, 400)
-        self.assertIsNone(data)
 
     @unittest_run_loop
     async def test_relative_is_not_mutual(self):
@@ -131,7 +128,6 @@ class TestImport(CitizensApiTestCase):
         ]
         status, data = await self.api_request('POST', '/imports', import_data)
         self.assertEquals(status, 400)
-        self.assertIsNone(data)
 
     @unittest_run_loop
     async def test_not_unique_citizen_id(self):
@@ -161,7 +157,6 @@ class TestImport(CitizensApiTestCase):
         ]
         status, data = await self.api_request('POST', '/imports', import_data)
         self.assertEquals(status, 400)
-        self.assertIsNone(data)
 
 
     # TODO: test_town_is_empty

@@ -85,7 +85,6 @@ class TestUpdateCitizen(CitizensApiTestCase):
         }
         status, data = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
         self.assertEquals(status, 400)
-        self.assertIsNone(data)
 
     @unittest_run_loop
     async def test_not_mutual_relatives(self):
@@ -108,7 +107,6 @@ class TestUpdateCitizen(CitizensApiTestCase):
         }
         status, data = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
         self.assertEquals(status, 400)
-        self.assertIsNone(data)
 
     @unittest_run_loop
     async def test_self_in_relatives(self):
@@ -130,5 +128,5 @@ class TestUpdateCitizen(CitizensApiTestCase):
             'relatives': [1],
         }
         status, data = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
-        self.assertEquals(status, 400)
-        self.assertIsNone(data)
+        self.assertEquals(status, 200)
+        self.assertEquals(data['data']['relatives'], [1])
