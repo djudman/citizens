@@ -3,13 +3,26 @@
 
 Формулировка задачи: https://yadi.sk/i/sw-6yNV0VBvZvQ
 
-Предоставляет следующие обработчики:
+API
+===
+Реализованы следующие обработчики:
 
 - **POST /imports**
-  - принимает на вход набор с данными о жителях в формате `json` и сохраняет
-  его с уникальным идентификатором `import_id`
+- **PATCH /imports/`$import_id`/citizens/`$citizen_id`**
+- **GET /imports/`$import_id`/citizens**
+- **GET /imports/`import_id`/citizens/birthdays**
+- **GET /imports/`$import_id`/towns/stat/percentile/age**
 
+Установка
+=========
+`TODO:`
 
-Зависимости:
-- aiohttp
-- pymongo
+Зависимости
+-----------
+- aiohttp 3.5.4
+- pymongo 3.8.0
+- numpy 1.17.0
+
+Комментарии
+-----------
+ `TODO:`

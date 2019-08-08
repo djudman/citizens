@@ -71,6 +71,7 @@ def get_age_percentiles(request):
     for town, citizens_in_town in groupby(citizens, key=lambda data: data['town']):
         ages = []
         for citizen in citizens_in_town:
+            # TODO: вычислить возраст просто как разницу между текущим годом и годом рождения
             birth_dt = datetime.strptime(citizen['birth_date'], '%d.%m.%Y')
             delta = datetime.now() - birth_dt
             age = math.floor(delta.days / 365)
