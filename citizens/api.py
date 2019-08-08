@@ -1,4 +1,3 @@
-import json
 import math
 import numpy as np
 from datetime import datetime
@@ -24,8 +23,7 @@ async def new_import(request):
         return web.Response(status=400)
     import_id = request.app.storage.new_import(import_data)
     out = {'data': {'import_id': import_id}}
-    return web.Response(content_type='application/json', body=json.dumps(out),
-                        status=201)
+    return web.json_response(data=out, status=201)
 
 
 async def update_citizen(request):
@@ -65,15 +63,13 @@ async def update_citizen(request):
         return web.Response(status=400)
 
     updated_data = request.app.storage.update_citizen(import_id, citizen_id, new_data)
-    out = {'data': updated_data}
-    return web.Response(content_type='application/json', body=json.dumps(out))
+    return web.json_response(data={'data': updated_data})
 
 
 def get_citizens(request):
     import_id = int(request.match_info['import_id'])
     citizens = request.app.storage.get_citizens(import_id)
-    out = {'data': citizens}
-    return web.Response(content_type='application/json', body=json.dumps(out))
+    return web.json_response(data={'data': citizens})
 
 
 def get_presents_by_month(request):
@@ -91,8 +87,7 @@ def get_presents_by_month(request):
                 'citizen_id': citizen['citizen_id'],
                 'presents': len(list(dates)),
             })
-    out = {'data': presents_by_month}
-    return web.Response(content_type='application/json', body=json.dumps(out))
+    return web.json_response(data={'data': presents_by_month})
 
 
 def get_age_percentiles(request):
@@ -112,8 +107,7 @@ def get_age_percentiles(request):
             'p75': math.floor(np.percentile(ages, 75, interpolation='linear')),
             'p99': math.floor(np.percentile(ages, 99, interpolation='linear')),
         })
-    out = {'data': age_percentiles}
-    return web.Response(content_type='application/json', body=json.dumps(out))
+    return web.json_response(data={'data': age_percentiles})
 
 
 def get_one_citizen(storage, import_id, citizen_id):
