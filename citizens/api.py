@@ -8,6 +8,7 @@ from aiohttp import web
 from citizens.data import (
     validate_import_data, validate_citizen_data, DataValidationError
 )
+from citizens.storage import CitizenNotFoundError
 
 
 class CitizensApiError(Exception):
@@ -27,34 +28,15 @@ async def update_citizen(request):
     citizen_id = int(request.match_info['citizen_id'])
     citizen_data = await request.json()
     if 'citizen_id' in citizen_data:
-        raise DataValidationError('citizen_id cannot be updated')
-    citizen_data['citizen_id'] = citizen_id
-    new_data = validate_citizen_data(citizen_data, all_fields_required=False)
-
+        raise DataValidationError('Forbidden to update field `citizen_id`.')
+    validate_citizen_data(citizen_data, all_fields_required=False)
     try:
         if 'relatives' in citizen_data:
-            old_data = get_one_citizen(request.app.storage, import_id, citizen_id)
-            old_relatives = old_data['relatives']
-            received_relatives = citizen_data['relatives']
-            for cid in old_relatives:
-                if cid not in received_relatives:
-                    # NOTE: Удаляем на той стороне меня из relatives
-                    data = get_one_citizen(request.app.storage, import_id, cid)
-                    if citizen_id in data['relatives']:
-                        data['relatives'].remove(citizen_id)
-                    request.app.storage.update_citizen(import_id, cid, {'relatives': data['relatives']})
-            for cid in received_relatives:
-                if cid not in old_relatives:
-                    # NOTE: Добавляем на той стороне меня в relatives
-                    data = get_one_citizen(request.app.storage, import_id, cid)
-                    if citizen_id not in data['relatives']:
-                        data['relatives'].append(citizen_id)
-                    request.app.storage.update_citizen(import_id, cid, {'relatives': data['relatives']})
-    except CitizensApiError:
-        # TODO: inconsistent relatives
-        return web.Response(status=400)
-
-    updated_data = request.app.storage.update_citizen(import_id, citizen_id, new_data)
+            for relative_id in citizen_data['relatives']:
+                request.app.storage.get_one_citizen(import_id, relative_id)  # TODO: тут можно выбрать только _id.
+        updated_data = request.app.storage.update_citizen(import_id, citizen_id, citizen_data)
+    except CitizenNotFoundError as e:
+        raise DataValidationError('You try to set non existent citizens.') from e
     return web.json_response(data={'data': updated_data})
 
 
@@ -71,7 +53,7 @@ def get_presents_by_month(request):
     for citizen in citizens:
         relatives_birthdays = []
         for cid in citizen['relatives']:
-            relative_data = get_one_citizen(request.app.storage, import_id, cid)
+            relative_data = request.app.storage.get_one_citizen(import_id, cid)
             dt = datetime.strptime(relative_data['birth_date'], '%d.%m.%Y')
             relatives_birthdays.append(dt)
         for month, dates in groupby(relatives_birthdays, key=lambda date: date.month):
@@ -100,10 +82,3 @@ def get_age_percentiles(request):
             'p99': math.floor(np.percentile(ages, 99, interpolation='linear')),
         })
     return web.json_response(data={'data': age_percentiles})
-
-
-def get_one_citizen(storage, import_id, citizen_id):
-    citizens = storage.get_citizens(import_id, {'citizen_id': citizen_id})
-    if len(citizens) == 1:
-        return citizens[0]
-    raise CitizensApiError('Expected 1 entry. Got {0}'.format(len(citizens)))

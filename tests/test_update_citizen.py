@@ -42,14 +42,14 @@ class TestUpdateCitizen(CitizensApiTestCase):
         self.assertEquals(status, 200)
         self.assertIsNotNone(data)
         self.assertIn('data', data)
-        citizen = data['data']
-        self.assertIsInstance(citizen, dict)
+        response_data = data['data']
+        self.assertIsInstance(response_data, dict)
 
-        self.assertEquals(citizen['citizen_id'], 1)
-        self.assertEquals(citizen['apartment'], 777)
-        self.assertEquals(citizen['birth_date'], '18.04.1997')
-        self.assertEquals(citizen['relatives'], [])
-        self.assertEquals(citizen['gender'], 'male')
+        self.assertEquals(response_data['citizen_id'], 1)
+        self.assertEquals(response_data['apartment'], 777)
+        self.assertEquals(response_data['birth_date'], '18.04.1997')
+        self.assertEquals(response_data['relatives'], [])
+        self.assertEquals(response_data['gender'], 'male')
 
         citizens = self.app.storage.get_citizens(import_id)
         citizens = sorted(citizens, key=lambda x: x['citizen_id'])  # для удобства тестирования
@@ -130,3 +130,48 @@ class TestUpdateCitizen(CitizensApiTestCase):
         status, data = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
         self.assertEquals(status, 200)
         self.assertEquals(data['data']['relatives'], [1])
+
+
+    @unittest_run_loop
+    async def test_update_citizen_id(self):
+        import_id = await self.import_data([
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "17.04.1997",
+                "gender": "male",
+                "relatives": []
+            }
+        ])
+        new_data = {
+            'citizen_id': 2,
+            'name': 'Алексей',
+        }
+        status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
+        self.assertEquals(status, 400)
+
+    @unittest_run_loop
+    async def test_update_not_existent_citizen(self):
+        import_id = await self.import_data([
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "17.04.1997",
+                "gender": "male",
+                "relatives": []
+            }
+        ])
+        new_data = {
+            'name': 'Алексей',
+        }
+        status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/2', new_data)
+        self.assertEquals(status, 400)
+    

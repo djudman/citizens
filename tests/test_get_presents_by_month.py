@@ -29,7 +29,7 @@ class TestGetPresentsByMonth(CitizensApiTestCase):
                 "name": "Иванов Иван Иванович",
                 "birth_date": "07.05.1987",
                 "gender": "male",
-                "relatives": [1]
+                "relatives": [1, 2]
             },
             {
                 "citizen_id": 3,
@@ -67,9 +67,12 @@ class TestGetPresentsByMonth(CitizensApiTestCase):
         self.assertEquals(citizen['citizen_id'], 3)
         self.assertEquals(citizen['presents'], 1)
 
-        self.assertEquals(len(presents_by_month['5']), 1)
+        self.assertEquals(len(presents_by_month['5']), 2)
         citizen = presents_by_month['5'][0]
         self.assertEquals(citizen['citizen_id'], 1)
+        self.assertEquals(citizen['presents'], 1)
+        citizen = presents_by_month['5'][1]
+        self.assertEquals(citizen['citizen_id'], 2)
         self.assertEquals(citizen['presents'], 1)
 
         for month in range(6, 13):

@@ -63,7 +63,6 @@ def validate_citizen_data(data, all_fields_required=True):
     # TODO: как-то не очень, придумать получше
     if all_fields_required and len(fields) != len(data):
         raise CitizenValidationError('Invalid fields set.')
-    validated_data = {}
     for name, value in data.items():
         if value is None:
             raise CitizenValidationError('Value cannot be null.')
@@ -74,10 +73,9 @@ def validate_citizen_data(data, all_fields_required=True):
             fields[name].validate(value)
         except FieldValidationError as e:
             raise CitizenValidationError(f'Invalid value for `{name}`.') from e
-        validated_data[name] = value
     if 'birth_date' in data:
         _validate_birth_date(data)
-    return validated_data
+    return data
 
 
 def _validate_birth_date(citizen_data):

@@ -4,13 +4,14 @@ from json.decoder import JSONDecodeError
 from aiohttp.test_utils import AioHTTPTestCase
 
 from citizens.main import create_app
-from citizens.storage import MemoryStorage
+from citizens.storage import MemoryStorage, MongoStorage
 
 
 class CitizensApiTestCase(AioHTTPTestCase):
     async def get_application(self):
         app = create_app()
         app.storage = MemoryStorage()
+        # app.storage = MongoStorage({'db': 'citizens'})
         return app
 
     async def api_request(self, http_method, uri, data=None):
