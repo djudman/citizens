@@ -2,6 +2,7 @@ import json
 import logging
 import logging.config
 import os
+import socket
 from os import makedirs
 from os.path import realpath, dirname, expanduser, join, exists
 
@@ -71,3 +72,17 @@ def create_app():
     ])
     app.on_cleanup.append(shutdown)
     return app
+
+
+class CitizensRestApi:
+    def run(self, port=8080, unix_socket_path=None):
+        sock = None
+        if unix_socket_path is not None:
+            socket_dirpath = realpath(dirname(unix_socket_path))
+            if not exists(socket_dirpath):
+                os.makedirs(socket_dirpath, exist_ok=True)
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sock.bind(unix_socket_path)
+        app = create_app()
+        web.run_app(app, print=None, port=port, sock=sock)
+
