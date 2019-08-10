@@ -1,6 +1,6 @@
-all:
-	python3 ./citizens/main.py
+start:
+	@./venv/citizens/bin/python ./citizens/main.py
 install:
-	pip install -r requirements.txt
+	@sh ./install.sh
 test:
-	@cd tests && python run.py
+	@./venv/citizens/bin/python ./tests/run.py

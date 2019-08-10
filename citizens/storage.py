@@ -37,7 +37,7 @@ class CitizensStorage:
         raise NotImplementedError()
 
     def close(self):
-        raise NotImplementedError()
+        pass
 
 
 class MemoryStorage(CitizensStorage):  # используется в тестах
