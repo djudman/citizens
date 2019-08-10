@@ -26,19 +26,39 @@ API
     - nginx >= 1.14.0  
         - `$ sudo apt-get install nginx`
     - mongodb >= 4.0.12  
-        - https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
+        - https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/  
+            - `wget -qO - https://www.mongodb.org/static/pgp/server-4.0.asc | sudo apt-key add -`
+            - `echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.0.list`  
+            - `sudo apt-get update`  
+            - `sudo apt-get install -y mongodb-org`  
+            - `sudo service mongod start`
     - supervisor >= 3.3.1  
-        - `$ sudo apt-get install supervisor`
+        - `$ sudo apt-get install -y supervisor`
+    - `$ sudo apt-get install -y python3-venv`  
+    - make  
+        - `$ sudo apt-get install make`
+
+Одной командой:
+```
+$ wget -qO - https://www.mongodb.org/static/pgp/server-4.0.asc | sudo apt-key add -; \
+echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.0.list; \
+sudo apt-get update; \
+sudo apt-get install -y mongodb-org nginx supervisor python3-venv make; \
+sudo service mongod start
+```
+
 
 2. Скачайте архив с исходным кодом:  
-`$ wget http://<domain.com>/citizens.tar.gz`
-3. Перейти в директорию с исходными файлами и выполнить команду для установки:  
-`$ cd citizens && make install`  
+`$ wget https://storage.yandexcloud.net/yandex-backend-school/citizens-0.0.1.tar.gz`
+3. Извлеките содержимое архива  
+`$ tar -xzf citizens-0.0.1.tar.gz`
+3. Перейдите в извлеченную директорию и выполните команду для установки:  
+`$ cd citizens-0.0.1 && make install`  
     - В процессе установки некоторые команды выполняются с `sudo`, поэтому ваш пользователь
     должен быть в группе `sudoers`, а также, вам скорее всего потребуется ввести ваш пароль.
-4. Запустить сервис  
+4. Запустите сервис  
 `$ make start`  
-5. Сделать тестовый запрос и убедиться, что ответ получен  
+5. Сделайте тестовые запросы и убедитесь, что ответы получены  
 
 Примеры тестовых запросов:  
 
