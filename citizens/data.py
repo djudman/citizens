@@ -44,10 +44,10 @@ class String(Field):
             raise FieldValidationError('Too short value. '
                 'Minimum {0} symbols expected.'.format(self._min_length))
         if self._letter_or_digit_required and not self.has_letter_or_digit(value):
-            raise FieldValidationError('At least one digit or letter required.')
+            raise FieldValidationError(f'At least one digit or letter required. Got: `{value}`')
         if self._values is not None and value not in self._values:
             possible_values = ', '.join(self._values)
-            raise FieldValidationError('Unexpected value. '\
+            raise FieldValidationError(f'Unexpected value `{value}`. '\
                 f'Possible values: {possible_values}')
 
     def has_letter_or_digit(self, value):

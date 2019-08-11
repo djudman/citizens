@@ -1,3 +1,4 @@
+import asyncio
 import math
 import numpy as np
 from datetime import datetime
@@ -16,7 +17,7 @@ class CitizensApiError(Exception):
 
 
 async def new_import(request):
-    import_data = await request.json()
+    import_data = await asyncio.shield(request.json())
     validate_import_data(import_data)
     import_id = request.app.storage.new_import(import_data)
     out = {'data': {'import_id': import_id}}
@@ -26,7 +27,7 @@ async def new_import(request):
 async def update_citizen(request):
     import_id = int(request.match_info['import_id'])
     citizen_id = int(request.match_info['citizen_id'])
-    citizen_data = await request.json()
+    citizen_data = await asyncio.shield(request.json())
     if 'citizen_id' in citizen_data:
         raise DataValidationError('Forbidden to update field `citizen_id`.')
     validate_citizen_data(citizen_data, all_fields_required=False)

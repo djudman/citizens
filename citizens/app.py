@@ -21,7 +21,7 @@ from citizens.storage import MongoStorage
 @middleware
 async def errors_middleware(request, handler):
     try:
-        response = await handler(request)
+        response = asyncio.shield(await handler(request))
     except DataValidationError as e:
         request.app.logger.error(e, exc_info=True)
         raise web.HTTPBadRequest()
@@ -66,7 +66,8 @@ class CitizensRestApi:
     def _create_app(self):
         app = web.Application(
             logger=logging.getLogger('citizens'),
-            middlewares=[errors_middleware]
+            middlewares=[errors_middleware],
+            client_max_size=1024 ** 3 * 2,  # 2Gb
         )
         app.storage = MongoStorage({'db': 'citizens'})
         app.add_routes([
