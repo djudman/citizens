@@ -1,4 +1,5 @@
 from pymongo import MongoClient, ReturnDocument
+from motor.motor_asyncio import AsyncIOMotorClient
 
 
 class CitizenNotFoundError(Exception):
@@ -84,9 +85,10 @@ class MemoryStorage(CitizensStorage):  # используется в теста�
 class MongoStorage(CitizensStorage):
     def __init__(self, config):
         self._driver = MongoClient(host=config.get('host'), port=config.get('port'))
+        self._async_driver = AsyncIOMotorClient(host=config.get('host'), port=config.get('port'))
         self._db = self._driver.get_database(config['db'])
 
-    def _generate_import_id(self):
+    def generate_import_id(self):
         # NOTE: вообще-то, делать такое в mongodb - плохая практика, может
         # привести к разным проблемам, например, при масштабировании.
         # Я так делаю, потому что в задании приводятся примеры с
@@ -107,9 +109,14 @@ class MongoStorage(CitizensStorage):
         return self._db.get_collection(collection_name)
 
     def new_import(self, data):
-        import_id = self._generate_import_id()
+        import_id = self.generate_import_id()
         self._get_collection(import_id).insert_many(data)
         return import_id
+
+    async def insert_citizen(self, import_id, data):
+        data['_id'] = data['citizen_id']
+        collection = self._get_collection(import_id)
+        return await collection.insert_one(data)
 
     def get_citizens(self, import_id):
         results = []
