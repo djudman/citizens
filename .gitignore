@@ -1,11 +1,7 @@
-citizens.egg-info/
 __pycache__/
-build/
 logs/
 htmlcov/
 .vscode/
-dist/
-run/
 venv/
 
 configs/citizens.*
@@ -14,4 +10,15 @@ configs/citizens.*
 *.log
 *.code-workspace
 
+# build artifacts
+citizens.egg-info/
+build/
+dist/
 MANIFEST
+*.tar.gz
+
+# yandex-tank
+yandex-tank/logs/
+tests/scripts/yandex-tank/load.yaml
+tests/scripts/yandex-tank/ammo.txt
+tests/scripts/yandex-tank/ammo.stpd*
