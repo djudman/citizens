@@ -1,7 +1,12 @@
 #!/bin/sh
 
-export CITIZENS_SERVER_NAME=84.201.138.48
-export CITIZENS_USER=entrant
+if [ ! $1 ]; then
+    echo "Host name as a first argument is expected. Example: ./install.sh 127.0.0.1"
+    exit 1
+fi
+
+export CITIZENS_HOST=$1
+export CITIZENS_USER=$(whoami)
 export CITIZENS_PATH=$(pwd)
 export CITIZENS_VENV=$CITIZENS_PATH/venv/citizens
 
@@ -13,7 +18,7 @@ rm -f /tmp/get-pip.py
 $CITIZENS_VENV/bin/pip install -r requirements.txt
 
 if [ -d "/etc/nginx/conf.d" ]; then
-    envsubst '$CITIZENS_SERVER_NAME:$CITIZENS_PATH' < ./configs/nginx.conf > ./configs/citizens.nginx.conf
+    envsubst '$CITIZENS_HOST:$CITIZENS_PATH' < ./configs/nginx.conf > ./configs/citizens.nginx.conf
     sudo ln -sf $CITIZENS_PATH/configs/citizens.nginx.conf /etc/nginx/conf.d/citizens.conf
     sudo service nginx reload
 else

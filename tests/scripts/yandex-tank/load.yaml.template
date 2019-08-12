@@ -1,5 +1,5 @@
 phantom:
-  address: 84.201.138.48:80
+  address: ${CITIZENS_HOST}:80
   ammofile: ammo.txt
   load_profile:
     load_type: rps

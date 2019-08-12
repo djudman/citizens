@@ -2,7 +2,6 @@ import datetime
 import json
 import random
 import string
-from os.path import join, realpath, dirname
 
 
 class ImportDataGenerator:
@@ -42,39 +41,3 @@ class ImportDataGenerator:
 
     def generate_import_data(self, num_citizens=100):
         return (self.generate_citizen_data() for _ in range(num_citizens))
-
-    def generate_tank_ammo(self, filename='ammo.txt', host='84.201.138.48',
-                           num_imports=3, num_citizens_in_import=3):
-        requests = []
-        imports = (self.generate_import_data(num_citizens_in_import) for _ in range(num_imports))
-        for import_data in imports:
-            str_import_data = json.dumps(list(import_data))
-            content_length = len(str_import_data)
-            headers = '\r\n'.join([
-                'POST /imports HTTP/1.1',
-                'Content-Length: {0}'.format(content_length),
-                'Host: {0}'.format(host),
-                'User-Agent: yandex-tank'
-            ])
-            request = '{request_headers}\r\n\r\n{body}'.format(
-                request_headers=headers,
-                body=str_import_data
-            )
-            requests.append(
-                '{request_size} {tag}\n{request}'.format(
-                    request_size=len(request),
-                    tag='import',
-                    request=request
-                )
-            )
-        with open(filename, 'w') as f:
-            f.write('\n'.join(requests))
-
-
-if __name__ == '__main__':
-    ImportDataGenerator().generate_tank_ammo(
-        filename=join(realpath(dirname(__file__)), 'yandex-tank/ammo.txt'),
-        host='84.201.138.48',
-        num_imports=10,
-        num_citizens_in_import=10000,
-    )

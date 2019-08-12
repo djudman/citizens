@@ -1,3 +1,5 @@
+host:=84.201.138.48
+
 all:
 	@./venv/citizens/bin/python setup.py sdist
 	@mv ./dist/citizens*.tar.gz ./
@@ -5,7 +7,7 @@ all:
 start:
 	@./venv/citizens/bin/python ./citizens/main.py
 install:
-	@sh ./install.sh
+	@sh ./install.sh $(host)
 test:
 	@./venv/citizens/bin/python ./tests/run.py
 clean:
@@ -14,5 +16,11 @@ clean:
 	@rm -rf dist
 	@rm -rf logs
 	@rm -f MANIFEST
+	@rm -f ./tests/yandex-tank/ammo.txt
+	@rm -f ./tests/yandex-tank/load.yaml
+tank:
+	@cd ./tests/yandex-tank
+	@docker run -v $(pwd):/var/loadtest -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent --net host -it --entrypoint /bin/bash direvius/yandex-tank
 ammo:
-	@./venv/citizens/bin/python ./tests/scripts/data.py
+	$(shell export CITIZENS_HOST=$(host); envsubst '$$CITIZENS_HOST' < ./tests/scripts/yandex-tank/load.yaml.template > ./tests/scripts/yandex-tank/load.yaml)
+	@./venv/citizens/bin/python ./tests/scripts/yandex-tank/ammo.py --host=$(host)

@@ -21,7 +21,7 @@ from citizens.storage import MongoStorage
 @middleware
 async def errors_middleware(request, handler):
     try:
-        response = asyncio.shield(await handler(request))
+        response = await asyncio.shield(handler(request))
     except DataValidationError as e:
         request.app.logger.error(e, exc_info=True)
         raise web.HTTPBadRequest()

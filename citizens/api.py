@@ -41,13 +41,13 @@ async def update_citizen(request):
     return web.json_response(data={'data': updated_data})
 
 
-def get_citizens(request):
+async def get_citizens(request):
     import_id = int(request.match_info['import_id'])
     citizens = request.app.storage.get_citizens(import_id)
     return web.json_response(data={'data': citizens})
 
 
-def get_presents_by_month(request):
+async def get_presents_by_month(request):
     import_id = int(request.match_info['import_id'])
     citizens = request.app.storage.get_citizens(import_id)
     presents_by_month = {month: [] for month in range(1, 13)}
@@ -65,7 +65,7 @@ def get_presents_by_month(request):
     return web.json_response(data={'data': presents_by_month})
 
 
-def get_age_percentiles(request):
+async def get_age_percentiles(request):
     import_id = int(request.match_info['import_id'])
     citizens = request.app.storage.get_citizens(import_id)
     age_percentiles = []
