@@ -51,7 +51,7 @@ class TestUpdateCitizen(CitizensApiTestCase):
         self.assertEquals(response_data['relatives'], [])
         self.assertEquals(response_data['gender'], 'male')
 
-        citizens = self.app.storage.get_citizens(import_id)
+        citizens = [data async for data in self.app.storage.get_citizens(import_id)]
         citizens = sorted(citizens, key=lambda x: x['citizen_id'])  # для удобства тестирования
         self.assertEquals(citizens[0]['citizen_id'], 1)
         self.assertEquals(citizens[0]['apartment'], 777)

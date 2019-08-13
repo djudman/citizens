@@ -68,38 +68,6 @@ class ListOf(Field):
             raise FieldValidationError('All elements must be unique.')
 
 
-def validate_import_data(data):
-    non_existent_relatives = set()
-    relatives_by_cid = {}
-
-    citizens = (validate_citizen_data(citizen_data) for citizen_data in data)
-    for citizen in citizens:
-        cid = citizen['citizen_id']
-        # Если уже встречали этот id, значит он не уникальный в этой выборке
-        if cid in relatives_by_cid:
-            raise DataValidationError(f'Non unique citizen_id `{cid}`')
-        relatives_by_cid[cid] = set(citizen['relatives'])
-        # Собираем id родственников, которых еще не встречали в выборке.
-        # Потенциально их может не оказаться вообще
-        non_seen_relatives = filter(lambda rid: rid not in relatives_by_cid,
-                                    citizen['relatives'])
-        non_existent_relatives.update(non_seen_relatives)
-        # Удаляем текущий cid из множества несуществующих родственников (если есть)
-        if cid in non_existent_relatives:
-            non_existent_relatives.remove(cid)
-
-    # Если после перебора всех жителей у нас остались не найденные родственники, ошибка
-    if non_existent_relatives:
-        cnt = len(non_existent_relatives)
-        raise DataValidationError(f'There are {cnt} non existent relatives')
-    # Проверяем родственные связи. Второй раз проходим по всем. TODO: подумать
-    # может всё-таки как-то можно ужать в один проход?
-    for cid, relatives in relatives_by_cid.items():
-        for relative_cid in relatives:
-            if cid not in relatives_by_cid[relative_cid]:
-                raise DataValidationError(f'Invalid relatives for `{cid}`')
-
-
 def validate_citizen_data(data, all_fields_required=True):
     integer = Field(value_type=int)
     string = String(min_length=1, letter_or_digit_required=True)
