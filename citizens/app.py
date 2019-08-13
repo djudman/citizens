@@ -15,7 +15,7 @@ from citizens.api import (
     new_import, update_citizen, get_citizens, get_presents_by_month,
     get_age_percentiles
 )
-from citizens.storage import MongoStorage
+from citizens.storage import MongoStorage, AsyncMongoStorage
 
 
 @middleware
@@ -64,12 +64,15 @@ class CitizensRestApi:
         }
 
     def _create_app(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         app = web.Application(
+            loop=loop,
             logger=logging.getLogger('citizens'),
             middlewares=[errors_middleware],
             client_max_size=1024 ** 3 * 2,  # 2Gb
         )
-        app.storage = MongoStorage({'db': 'citizens'})
+        app.storage = AsyncMongoStorage({'db': 'citizens'})
         app.add_routes([
             web.post('/imports', new_import),
             web.patch(r'/imports/{import_id:\d+}/citizens/{citizen_id:\d+}', update_citizen),
@@ -90,7 +93,6 @@ class CitizensRestApi:
             sock.bind(unix_socket_path)
             self._unix_socket = (unix_socket_path, sock)
             self._logger.info(f'Unix socket `{unix_socket_path}` is ready.')
-        asyncio.set_event_loop(asyncio.new_event_loop())
         web.run_app(self._app, print=None, port=port, sock=sock)
 
     async def _shutdown(self, app):

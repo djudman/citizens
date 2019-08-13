@@ -10,6 +10,9 @@ class CitizensStorage:
     async def generate_import_id(self) -> int:
         raise NotImplementedError()
 
+    async def new_import(self, import_id, data):
+        raise NotImplementedError()
+
     async def insert_citizen(self, import_id: int, data: dict):
         raise NotImplementedError()
 
@@ -55,6 +58,9 @@ class MemoryStorage(CitizensStorage):  # используется в теста�
     async def generate_import_id(self) -> int:
         self._counter += 1
         return self._counter
+
+    async def new_import(self, import_id, data):
+        self._data[import_id] = data
 
     async def insert_citizen(self, import_id: int, data: dict):
         cid = data['citizen_id']
@@ -115,6 +121,9 @@ class MongoStorage(CitizensStorage):
     def _get_collection(self, import_id):
         collection_name = f'import_{import_id}'
         return self._db.get_collection(collection_name)
+
+    async def new_import(self, import_id, data):
+        self._get_collection(import_id).insert_many(data)
 
     async def insert_citizen(self, import_id: int, data: dict):
         data['_id'] = data['citizen_id']
@@ -190,6 +199,9 @@ class AsyncMongoStorage(CitizensStorage):
         )
         document = await collection.find_one(query)
         return document['counter']
+
+    async def new_import(self, import_id, data):
+        await self._get_collection(import_id).insert_many(data)
 
     async def insert_citizen(self, import_id: int, data: dict):
         data['_id'] = data['citizen_id']

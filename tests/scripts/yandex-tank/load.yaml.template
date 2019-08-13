@@ -3,7 +3,7 @@ phantom:
   ammofile: ammo.txt
   load_profile:
     load_type: rps
-    schedule: line(1, 10, 1m)
+    schedule: line(1, 2, 1m)
 console:
   enabled: true
 telegraf:
