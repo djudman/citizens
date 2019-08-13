@@ -6,7 +6,7 @@ from itertools import groupby
 
 from aiohttp import web
 
-from citizens.data import validate_citizen_data, DataValidationError
+from citizens.data import validate_citizen_data, DataValidationError, ImportDataValidator
 from citizens.storage import CitizenNotFoundError
 
 
@@ -16,43 +16,15 @@ class CitizensApiError(Exception):
 
 async def new_import(request):
     import_data = await asyncio.shield(request.json())
-
     storage = request.app.storage
     import_id = await storage.generate_import_id()
-    citizens = (validate_citizen_data(citizen_data) for citizen_data in import_data)
-
-    non_existent_relatives = set()
-    relatives_by_cid = {}
-    for citizen in citizens:
-        cid = citizen['citizen_id']
-        # Если уже встречали этот id, значит он не уникальный в этой выборке
-        if cid in relatives_by_cid:
-            raise DataValidationError(f'Non unique citizen_id `{cid}`')
-        relatives_by_cid[cid] = set(citizen['relatives'])
-        # Собираем id родственников, которых еще не встречали в выборке.
-        # Потенциально их может не оказаться вообще
-        non_seen_relatives = filter(lambda rid: rid not in relatives_by_cid,
-                                    citizen['relatives'])
-        non_existent_relatives.update(non_seen_relatives)
-        # Удаляем текущий cid из множества несуществующих родственников (если есть)
-        if cid in non_existent_relatives:
-            non_existent_relatives.remove(cid)
-        await storage.insert_citizen(import_id, citizen)
-
-    # TODO: может какой-то класс-валидатор придумать?
-    # Если после перебора всех жителей у нас остались не найденные родственники, ошибка
-    if non_existent_relatives:
-        cnt = len(non_existent_relatives)
-        raise DataValidationError(f'There are {cnt} non existent relatives')
-    # Проверяем родственные связи. Второй раз проходим по всем. TODO: подумать
-    # может всё-таки как-то можно ужать в один проход?
-    for cid, relatives in relatives_by_cid.items():
-        for relative_cid in relatives:
-            if cid not in relatives_by_cid[relative_cid]:
-                raise DataValidationError(f'Invalid relatives for `{cid}`')
-
-    # TODO: удалить данные, если была ошибка валидации
-
+    try:
+        with ImportDataValidator(import_data) as citizens:
+            for citizen in citizens:
+                await storage.insert_citizen(import_id, citizen)
+    except DataValidationError:
+        await storage.drop_import(import_id)
+        raise
     out = {'data': {'import_id': import_id}}
     return web.json_response(data=out, status=201)
 

@@ -4,15 +4,20 @@ from json.decoder import JSONDecodeError
 from aiohttp.test_utils import AioHTTPTestCase
 
 from citizens.app import CitizensRestApi
-from citizens.storage import MemoryStorage, MongoStorage
+from citizens.storage import MemoryStorage, MongoStorage, AsyncMongoStorage
 
 
 class CitizensApiTestCase(AioHTTPTestCase):
+    def tearDown(self):
+        super().tearDown()
+        self.app.storage.close()
+
     async def get_application(self):
-        app = CitizensRestApi()._app
-        app.storage = MemoryStorage()
-        # app.storage = MongoStorage({'db': 'citizens'})
-        return app
+        self.app = CitizensRestApi()._app
+        self.app.storage = MemoryStorage()
+        # self.app.storage = MongoStorage({'db': 'citizens'})
+        # self.app.storage = AsyncMongoStorage({'db': 'citizens'})
+        return self.app
 
     async def api_request(self, http_method, uri, data=None):
         if data is not None:

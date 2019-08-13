@@ -40,6 +40,9 @@ class CitizensStorage:
     async def delete_relative_from(self, import_id, citizen_id, relative_id):
         raise NotImplementedError()
 
+    async def drop_import(self, import_id):
+        raise NotImplementedError()
+
     def close(self):
         pass
 
@@ -83,6 +86,10 @@ class MemoryStorage(CitizensStorage):  # используется в теста�
     async def delete_relative_from(self, import_id, citizen_id, relative_id):
         self._data[import_id][citizen_id]['relatives'].remove(relative_id)
 
+    async def drop_import(self, import_id):
+        if import_id in self._data:
+            del self._data[import_id]
+
 
 class MongoStorage(CitizensStorage):
     def __init__(self, config):
@@ -114,11 +121,9 @@ class MongoStorage(CitizensStorage):
         self._get_collection(import_id).insert_one(data)
 
     async def get_citizens(self, import_id):
-        results = []
         for entry in self._get_collection(import_id).find():
             del entry['_id']
-            results.append(entry)
-        return results  # TODO: вернуть курсор / генератор / НЕ СПИСОК
+            yield entry
 
     async def get_one_citizen(self, import_id, citizen_id):
         citizen = self._get_collection(import_id).find_one(
@@ -157,6 +162,9 @@ class MongoStorage(CitizensStorage):
         )
         if updated_data is None:
             raise CitizenNotFoundError(f'Citizen {citizen_id} not found.')
+
+    async def drop_import(self, import_id):
+        self._get_collection(import_id).drop()
 
     def close(self):
         self._driver.close()
@@ -230,6 +238,9 @@ class AsyncMongoStorage(CitizensStorage):
         )
         if result.matched_count != 1:
             raise CitizenNotFoundError(f'Citizen `{citizen_id}` not found.')
+
+    async def drop_import(self, import_id):
+        await self._get_collection(import_id).drop()
 
     def close(self):
         self._driver.close()
