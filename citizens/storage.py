@@ -1,3 +1,7 @@
+import asyncio
+import functools
+from concurrent.futures import ThreadPoolExecutor
+
 from pymongo import MongoClient, ReturnDocument
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -181,9 +185,11 @@ class MongoStorage(CitizensStorage):
 
 class AsyncMongoStorage(CitizensStorage):
     def __init__(self, config):
-        self._driver = AsyncIOMotorClient(
-            host=config.get('host'), port=config.get('port'))
+        self._executor = ThreadPoolExecutor(max_workers=20)
+        self._driver = MongoClient(host=config.get('host'), port=config.get('port'))
         self._db = self._driver.get_database(config['db'])
+        self._loop = asyncio.get_event_loop()
+        self._async = functools.partial(self._loop.run_in_executor, self._executor)
 
     def _get_collection(self, import_id):
         collection_name = f'import_{import_id}'
@@ -192,30 +198,34 @@ class AsyncMongoStorage(CitizensStorage):
     async def generate_import_id(self):
         collection = self._db.get_collection('counters')
         query = {'_id': 'import_id'}
-        await collection.update_one(
+        document = await self._async(functools.partial(
+            collection.find_one_and_update,
             query,
             {'$inc': {'counter': 1}},
             upsert=True
-        )
-        document = await collection.find_one(query)
+        ))
         return document['counter']
 
     async def new_import(self, import_id, data):
-        await self._get_collection(import_id).insert_many(data)
+        collection = self._get_collection(import_id)
+        await self._async(collection.insert_many, data)
 
     async def insert_citizen(self, import_id: int, data: dict):
         data['_id'] = data['citizen_id']
         collection = self._get_collection(import_id)
-        await collection.insert_one(data, bypass_document_validation=True)
+        await self._async(functools.partial(
+            collection.insert_one, data, bypass_document_validation=True))
 
     async def get_citizens(self, import_id):
-        async for entry in self._get_collection(import_id).find():
+        collection = self._get_collection(import_id)
+        cursor = await self._async(collection.find)
+        for entry in cursor:
             del entry['_id']
             yield entry
 
     async def get_one_citizen(self, import_id, citizen_id):
         collection = self._get_collection(import_id)
-        citizen = await collection.find_one({'_id': citizen_id})
+        citizen = await self._async(collection.find_one, {'_id': citizen_id})
         if citizen is None:
             raise CitizenNotFoundError(f'Citizen `{citizen_id}` not found.')
         del citizen['_id']
@@ -226,33 +236,42 @@ class AsyncMongoStorage(CitizensStorage):
             await self._update_relatives(import_id, citizen_id, new_values['relatives'])
         collection = self._get_collection(import_id)
         query = {'_id': citizen_id}
-        result = await collection.update_one(query, {'$set': new_values})
-        if result.matched_count != 1:
+        updated_data = await self._async(functools.partial(
+            collection.find_one_and_update,
+            query,
+            {'$set': new_values},
+            return_document=ReturnDocument.AFTER
+        ))
+        if not updated_data:
             raise CitizenNotFoundError(f'Citizen `{citizen_id}` not found.')
-        updated_data = await collection.find_one(query)  # TODO: тут потенциально можем получить не то, что хотим
         del updated_data['_id']
         return updated_data
 
     async def add_relative_to(self, import_id, citizen_id, relative_id):
         collection = self._get_collection(import_id)
-        result = await collection.update_one(
+        updated_data = await self._async(functools.partial(
+            collection.find_one_and_update,
             {'_id': citizen_id},
-            {'$addToSet': {'relatives': relative_id}}
-        )
-        if result.matched_count != 1:
+            {'$addToSet': {'relatives': relative_id}},
+            return_document=ReturnDocument.AFTER
+        ))
+        if not updated_data:
             raise CitizenNotFoundError(f'Citizen `{citizen_id}` not found.')
 
     async def delete_relative_from(self, import_id, citizen_id, relative_id):
         collection = self._get_collection(import_id)
-        result = await collection.update_one(
+        updated_data = await self._async(functools.partial(
+            collection.find_one_and_update,
             {'_id': citizen_id},
-            {'$pull': {'relatives': relative_id}}
-        )
-        if result.matched_count != 1:
+            {'$pull': {'relatives': relative_id}},
+            return_document=ReturnDocument.AFTER
+        ))
+        if not updated_data:
             raise CitizenNotFoundError(f'Citizen `{citizen_id}` not found.')
 
     async def drop_import(self, import_id):
-        await self._get_collection(import_id).drop()
+        collection = self._get_collection(import_id)
+        await self._async(collection.drop)
 
     def close(self):
         self._driver.close()

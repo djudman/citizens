@@ -64,10 +64,10 @@ class CitizensRestApi:
         }
 
     def _create_app(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        # loop = asyncio.get_event_loop()
+        # asyncio.set_event_loop(loop)
         app = web.Application(
-            loop=loop,
+            # loop=loop,
             logger=logging.getLogger('citizens'),
             middlewares=[errors_middleware],
             client_max_size=1024 ** 3 * 2,  # 2Gb
