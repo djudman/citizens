@@ -23,3 +23,5 @@ tank:
 	docker run -v $(shell cd ./tests/scripts/yandex-tank && pwd):/var/loadtest -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent --net host -it --entrypoint /bin/bash direvius/yandex-tank
 ammo:
 	@./venv/citizens/bin/python ./tests/scripts/yandex-tank/ammo.py --host=$(host)
+request:
+	@./venv/citizens/bin/python ./tests/scripts/client.py --host=$(host)

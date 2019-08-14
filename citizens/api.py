@@ -2,6 +2,7 @@ import asyncio
 import functools
 import math
 import numpy as np
+from aiojobs.aiohttp import atomic
 from datetime import datetime
 from itertools import groupby
 
@@ -15,20 +16,25 @@ class CitizensApiError(Exception):
     pass
 
 
+@atomic
 async def new_import(request):
-    import_data = await asyncio.shield(request.json())
+    logger = request.app.logger
+    logger.debug('new import')
+    import_data = await request.json()
     storage = request.app.storage
     validate_import_data(import_data)
     import_id = await storage.generate_import_id() # TODO: тут всё ещё есть проблема
     await storage.new_import(import_id, import_data)
     out = {'data': {'import_id': import_id}}
+    logger.debug(f'Data imported. import_id = {import_id}')
     return web.json_response(data=out, status=201)
 
 
+@atomic
 async def update_citizen(request):
     import_id = int(request.match_info['import_id'])
     citizen_id = int(request.match_info['citizen_id'])
-    citizen_data = await asyncio.shield(request.json())
+    citizen_data = await request.json()
     if 'citizen_id' in citizen_data:
         raise DataValidationError('Forbidden to update field `citizen_id`.')
     CitizenValidator().validate(citizen_data, all_fields_required=False)

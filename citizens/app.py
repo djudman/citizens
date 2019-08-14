@@ -4,6 +4,8 @@ import logging
 import logging.config
 import os
 import socket
+from aiojobs.aiohttp import setup
+from concurrent.futures import CancelledError
 from os import makedirs
 from os.path import realpath, dirname, expanduser, join, exists
 
@@ -21,10 +23,13 @@ from citizens.storage import MongoStorage, AsyncMongoStorage
 @middleware
 async def errors_middleware(request, handler):
     try:
-        response = await asyncio.shield(handler(request))
+        response = await handler(request)
     except DataValidationError as e:
         request.app.logger.error(e, exc_info=True)
         raise web.HTTPBadRequest()
+    except CancelledError as e:
+        request.app.logger.error(e, exc_info=True)
+        raise Exception('Async task cancelled') from e
     except Exception as e:
         request.app.logger.error(e, exc_info=True)
         raise e
@@ -81,6 +86,7 @@ class CitizensRestApi:
             web.get(r'/imports/{import_id:\d+}/towns/stat/percentile/age', get_age_percentiles),
         ])
         app.on_cleanup.append(self._shutdown)
+        setup(app)
         return app
 
     def run(self, port=8080, unix_socket_path=None):
