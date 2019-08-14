@@ -64,7 +64,12 @@ class MemoryStorage(CitizensStorage):  # используется в теста�
         return self._counter
 
     async def new_import(self, import_id, data):
-        self._data[import_id] = data
+        if import_id in self._data:
+            raise Exception(f'import_id = `{import_id}` already in storage')
+        self._data[import_id] = {}
+        for citizen_data in data:
+            cid = citizen_data['citizen_id']
+            self._data[import_id][cid] = citizen_data
 
     async def insert_citizen(self, import_id: int, data: dict):
         cid = data['citizen_id']
@@ -202,6 +207,7 @@ class AsyncMongoStorage(CitizensStorage):
             collection.find_one_and_update,
             query,
             {'$inc': {'counter': 1}},
+            return_document=ReturnDocument.AFTER,
             upsert=True
         ))
         return document['counter']

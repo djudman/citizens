@@ -48,8 +48,7 @@ async def new_import(request):
             if cid not in relatives_by_cid[relative_cid]:
                 raise DataValidationError(f'Invalid relatives for `{cid}`')
 
-    # await = storage.new_import(import_id, import_data)
-    asyncio.create_task(storage.new_import(import_id, import_data))
+    await storage.new_import(import_id, import_data)
     out = {'data': {'import_id': import_id}}
     return web.json_response(data=out, status=201)
 
