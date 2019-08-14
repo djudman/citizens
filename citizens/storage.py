@@ -3,7 +3,6 @@ import functools
 from concurrent.futures import ThreadPoolExecutor
 
 from pymongo import MongoClient, ReturnDocument
-from motor.motor_asyncio import AsyncIOMotorClient
 
 
 class CitizenNotFoundError(Exception):
@@ -190,7 +189,7 @@ class MongoStorage(CitizensStorage):
 
 class AsyncMongoStorage(CitizensStorage):
     def __init__(self, config):
-        self._executor = ThreadPoolExecutor(max_workers=20)
+        self._executor = ThreadPoolExecutor()
         self._driver = MongoClient(host=config.get('host'), port=config.get('port'))
         self._db = self._driver.get_database(config['db'])
         self._loop = asyncio.get_event_loop()
