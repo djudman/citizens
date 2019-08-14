@@ -1,4 +1,5 @@
 import asyncio
+import functools
 import math
 import numpy as np
 from datetime import datetime
@@ -57,9 +58,10 @@ async def get_presents_by_month(request):
             relative_data = await request.app.storage.get_one_citizen(import_id, cid)
             dt = datetime.strptime(relative_data['birth_date'], '%d.%m.%Y')
             relatives_birthdays.append(dt)
+        citizen_id = citizen['citizen_id']
         for month, dates in groupby(relatives_birthdays, key=lambda date: date.month):
             presents_by_month[month].append({
-                'citizen_id': citizen['citizen_id'],
+                'citizen_id': citizen_id,
                 'presents': len(list(dates)),
             })
     return web.json_response(data={'data': presents_by_month})
@@ -69,18 +71,17 @@ async def get_age_percentiles(request):
     import_id = int(request.match_info['import_id'])
     citizens = [data async for data in request.app.storage.get_citizens(import_id)]
     age_percentiles = []
+    percentile = functools.partial(np.percentile, interpolation='linear')
     for town, citizens_in_town in groupby(citizens, key=lambda data: data['town']):
         ages = []
         for citizen in citizens_in_town:
-            # TODO: вычислить возраст просто как разницу между текущим годом и годом рождения
             birth_dt = datetime.strptime(citizen['birth_date'], '%d.%m.%Y')
-            delta = datetime.now() - birth_dt
-            age = math.floor(delta.days / 365)
+            age = datetime.now().year - birth_dt.year
             ages.append(age)
         age_percentiles.append({
             'town': town,
-            'p50': math.floor(np.percentile(ages, 50, interpolation='linear')),
-            'p75': math.floor(np.percentile(ages, 75, interpolation='linear')),
-            'p99': math.floor(np.percentile(ages, 99, interpolation='linear')),
+            'p50': round(percentile(ages, 50), 2),
+            'p75': round(percentile(ages, 75), 2),
+            'p99': round(percentile(ages, 99), 2),
         })
     return web.json_response(data={'data': age_percentiles})
