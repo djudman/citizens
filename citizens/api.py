@@ -19,7 +19,7 @@ async def new_import(request):
     import_data = await asyncio.shield(request.json())
     storage = request.app.storage
     validate_import_data(import_data)
-    import_id = await storage.generate_import_id()
+    import_id = await storage.generate_import_id() # TODO: тут всё ещё есть проблема
     await storage.new_import(import_id, import_data)
     out = {'data': {'import_id': import_id}}
     return web.json_response(data=out, status=201)

@@ -77,9 +77,9 @@ class TestGetAgePercentiles(CitizensApiTestCase):
         self.assertEquals(stat[0]['town'], 'Москва')
         self.assertEquals(stat[0]['p50'], 30)
         self.assertEquals(stat[0]['p75'], 35)
-        self.assertEquals(stat[0]['p99'], 39)
+        self.assertEquals(stat[0]['p99'], 39.8)
 
         self.assertEquals(stat[1]['town'], 'Санкт-Петербург')
         self.assertEquals(stat[1]['p50'], 65)
-        self.assertEquals(stat[1]['p75'], 67)
-        self.assertEquals(stat[1]['p99'], 69)
+        self.assertEquals(stat[1]['p75'], 67.5)
+        self.assertEquals(stat[1]['p99'], 69.9)

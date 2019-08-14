@@ -64,6 +64,46 @@ class TestUpdateCitizen(CitizensApiTestCase):
         self.assertEquals(len(citizens[1]['relatives']), 0)
 
     @unittest_run_loop
+    async def test_update_relatives(self):
+        import_id = await self.import_data([
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "17.04.1997",
+                "gender": "male",
+                "relatives": []
+            },
+            {
+                "citizen_id": 2,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 8,
+                "name": "Иванов Иван Иванович",
+                "birth_date": "07.05.1987",
+                "gender": "male",
+                "relatives": []
+            }
+        ])
+
+        new_data = {
+            'relatives': [2],
+        }
+        status, data = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
+        self.assertEquals(status, 200)
+        response_data = data['data']
+        self.assertEqual(response_data['relatives'], [2])
+        citizens = [data async for data in self.app.storage.get_citizens(import_id)]
+        self.assertEquals(citizens[0]['citizen_id'], 1)
+        self.assertEquals(citizens[0]['relatives'], [2])
+        self.assertEquals(citizens[1]['citizen_id'], 2)
+        self.assertEquals(citizens[1]['relatives'], [1])
+
+    @unittest_run_loop
     async def test_birth_date_invalid_format(self):
         import_id = await self.import_data([
             {
@@ -175,3 +215,44 @@ class TestUpdateCitizen(CitizensApiTestCase):
         status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/2', new_data)
         self.assertEquals(status, 400)
     
+    @unittest_run_loop
+    async def test_set_empty_name(self):
+        import_id = await self.import_data([
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "17.04.1997",
+                "gender": "male",
+                "relatives": []
+            }
+        ])
+        new_data = {
+            'name': '',
+        }
+        status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
+        self.assertEquals(status, 400)
+
+    @unittest_run_loop
+    async def test_set_invalid_field(self):
+        import_id = await self.import_data([
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "17.04.1997",
+                "gender": "male",
+                "relatives": []
+            }
+        ])
+        new_data = {
+            'xxx': 'xxx',
+        }
+        status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
+        self.assertEquals(status, 400)

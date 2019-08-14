@@ -38,7 +38,7 @@ class CitizensStorage:
         for rid in new_relatives:
             if rid not in old_relatives:
                 # NOTE: Добавляем на той стороне меня в relatives
-                await self.add_relative_to(import_id, citizen_id, rid)
+                await self.add_relative_to(import_id, rid, citizen_id)
 
     async def add_relative_to(self, import_id, citizen_id, relative_id):
         raise NotImplementedError()
