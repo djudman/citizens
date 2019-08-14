@@ -20,6 +20,8 @@ class Field:
         self._value_type = value_type
 
     def validate(self, value):
+        if value is None:
+            raise FieldValidationError('Value is None')
         self._check_type(value)
 
     def _check_type(self, value):
@@ -107,6 +109,44 @@ def _validate_birth_date(citizen_data):
         cid = citizen_data.get('citizen_id', '<no value>')
         err = f'Invalid format of `birth_date` for citizen `{cid}`'
         raise FieldValidationError(err) from e
+
+
+class CitizenValidator:
+    def __init__(self):
+        integer = Field(value_type=int)
+        string = String(min_length=1, letter_or_digit_required=True)
+        self._fields = {
+            'citizen_id': integer,
+            'town': string,
+            'street': string,
+            'building': string,
+            'apartment': integer,
+            'name': String(min_length=1),
+            'birth_date': String(min_length=10),
+            'gender': String(values=('male', 'female')),
+            'relatives': ListOf(int, unique=True),
+        }
+
+    def validate(self, data, all_fields_required=True):
+        fields = self._fields
+        if all_fields_required and len(fields) != len(data):
+            raise CitizenValidationError('Invalid fields set.')
+        name = None
+        try:
+            for name, value in data.items():
+                fields = self._fields
+                if name not in fields:
+                    # считаем лишний атрибут ошибкой
+                    raise FieldValidationError(f'Unknown field `{name}`.')
+                fields[name].validate(value)
+                if name == 'birth_date':
+                    try:
+                        datetime.strptime(value, '%d.%m.%Y')
+                    except ValueError as e:
+                        raise FieldValidationError('Invalid format. Date format `dd.mm.yyyy` expected') from e
+        except FieldValidationError as e:
+            raise CitizenValidationError(f'Field `{name}` is invalid.') from e
+        return data
 
 
 class ValidateCitizensIterator:

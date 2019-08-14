@@ -6,7 +6,7 @@ from itertools import groupby
 
 from aiohttp import web
 
-from citizens.data import validate_citizen_data, DataValidationError, ImportDataValidator
+from citizens.data import DataValidationError, CitizenValidator
 from citizens.storage import CitizenNotFoundError
 
 
@@ -21,8 +21,9 @@ async def new_import(request):
 
     relatives_by_cid = {}
     non_existent_relatives = set()
+    citizen_validator = CitizenValidator()
     for citizen in import_data:
-        validate_citizen_data(citizen)
+        citizen_validator.validate(citizen)
         cid = citizen['citizen_id']
         # Если уже встречали этот id, значит он не уникальный в этой выборке
         if cid in relatives_by_cid:
@@ -59,7 +60,7 @@ async def update_citizen(request):
     citizen_data = await asyncio.shield(request.json())
     if 'citizen_id' in citizen_data:
         raise DataValidationError('Forbidden to update field `citizen_id`.')
-    validate_citizen_data(citizen_data, all_fields_required=False)
+    CitizenValidator().validate(citizen_data, all_fields_required=False)
     try:
         if 'relatives' in citizen_data:
             for relative_id in citizen_data['relatives']:
