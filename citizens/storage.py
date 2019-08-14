@@ -230,7 +230,7 @@ class AsyncMongoStorage(CitizensStorage):
 
     async def get_one_citizen(self, import_id, citizen_id):
         collection = self._get_collection(import_id)
-        citizen = await self._async(collection.find_one, {'_id': citizen_id})
+        citizen = await self._async(collection.find_one, {'citizen_id': citizen_id})
         if citizen is None:
             raise CitizenNotFoundError(f'Citizen `{citizen_id}` not found.')
         del citizen['_id']
@@ -240,7 +240,7 @@ class AsyncMongoStorage(CitizensStorage):
         if 'relatives' in new_values:
             await self._update_relatives(import_id, citizen_id, new_values['relatives'])
         collection = self._get_collection(import_id)
-        query = {'_id': citizen_id}
+        query = {'citizen_id': citizen_id}
         updated_data = await self._async(functools.partial(
             collection.find_one_and_update,
             query,
@@ -256,7 +256,7 @@ class AsyncMongoStorage(CitizensStorage):
         collection = self._get_collection(import_id)
         updated_data = await self._async(functools.partial(
             collection.find_one_and_update,
-            {'_id': citizen_id},
+            {'citizen_id': citizen_id},
             {'$addToSet': {'relatives': relative_id}},
             return_document=ReturnDocument.AFTER
         ))
@@ -267,7 +267,7 @@ class AsyncMongoStorage(CitizensStorage):
         collection = self._get_collection(import_id)
         updated_data = await self._async(functools.partial(
             collection.find_one_and_update,
-            {'_id': citizen_id},
+            {'citizen_id': citizen_id},
             {'$pull': {'relatives': relative_id}},
             return_document=ReturnDocument.AFTER
         ))

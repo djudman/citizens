@@ -15,8 +15,8 @@ class CitizensApiTestCase(AioHTTPTestCase):
     async def get_application(self):
         self.app = CitizensRestApi()._app
         self.app.storage = MemoryStorage()
-        # self.app.storage = MongoStorage({'db': 'citizens'})
-        # self.app.storage = AsyncMongoStorage({'db': 'citizens'})
+        # self.app.storage = MongoStorage({'db': 'test_citizens'})
+        # self.app.storage = AsyncMongoStorage({'db': 'test_citizens'})
         return self.app
 
     async def api_request(self, http_method, uri, data=None):

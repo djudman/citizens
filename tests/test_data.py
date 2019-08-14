@@ -1,11 +1,13 @@
 import unittest
 
 from citizens.data import (
-    validate_citizen_data, DataValidationError
+    CitizenValidator, DataValidationError, validate_import_data
 )
 
 
 class TestData(unittest.TestCase):
+    def setUp(self):
+        self.validator = CitizenValidator()
     def test_new_citizen(self):
         data = {
             "citizen_id": 1,
@@ -18,7 +20,7 @@ class TestData(unittest.TestCase):
             "gender": "male",
             "relatives": [2]
         }
-        validate_citizen_data(data)
+        self.validator.validate(data)
 
     def test_non_existent_relatives(self):
         import_data = [
@@ -34,8 +36,8 @@ class TestData(unittest.TestCase):
                 "relatives": [2]
             },
         ]
-        # with self.assertRaises(DataValidationError) as e:
-        #     validate_import_data(import_data)
+        with self.assertRaises(DataValidationError) as e:
+            validate_import_data(import_data)
 
     def test_null_values(self):
         import_data = [
@@ -51,5 +53,5 @@ class TestData(unittest.TestCase):
                 "relatives": []
             },
         ]
-        # with self.assertRaises(DataValidationError) as e:
-        #     validate_import_data(import_data)
+        with self.assertRaises(DataValidationError) as e:
+            validate_import_data(import_data)

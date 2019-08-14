@@ -70,47 +70,6 @@ class ListOf(Field):
             raise FieldValidationError('All elements must be unique.')
 
 
-def validate_citizen_data(data, all_fields_required=True):
-    integer = Field(value_type=int)
-    string = String(min_length=1, letter_or_digit_required=True)
-    fields = {
-        'citizen_id': integer,
-        'town': string,
-        'street': string,
-        'building': string,
-        'apartment': integer,
-        'name': String(min_length=1),
-        'birth_date': String(min_length=10),
-        'gender': String(values=('male', 'female')),
-        'relatives': ListOf(int, unique=True),
-    }
-    # TODO: как-то не очень, придумать получше
-    if all_fields_required and len(fields) != len(data):
-        raise CitizenValidationError('Invalid fields set.')
-    for name, value in data.items():
-        if value is None:
-            raise CitizenValidationError('Value cannot be null.')
-        if name not in fields:
-            # NOTE: считаем лишний атрибут ошибкой
-            raise CitizenValidationError(f'Unknown field `{name}`.')
-        try:
-            fields[name].validate(value)
-        except FieldValidationError as e:
-            raise CitizenValidationError(f'Invalid value for `{name}`.') from e
-    if 'birth_date' in data:
-        _validate_birth_date(data)
-    return data
-
-
-def _validate_birth_date(citizen_data):
-    try:
-        datetime.strptime(citizen_data['birth_date'], '%d.%m.%Y')
-    except ValueError as e:
-        cid = citizen_data.get('citizen_id', '<no value>')
-        err = f'Invalid format of `birth_date` for citizen `{cid}`'
-        raise FieldValidationError(err) from e
-
-
 class CitizenValidator:
     def __init__(self):
         integer = Field(value_type=int)
@@ -149,59 +108,33 @@ class CitizenValidator:
         return data
 
 
-class ValidateCitizensIterator:
-    def __init__(self, citizens):
-        self._citizens = citizens
-        self._non_existent_relatives = set()
-        self._relatives_by_cid = {}
-
-    def __iter__(self):
-        self._iterator = iter(self._citizens)
-        return self
-
-    def __next__(self):
-        citizen = next(self._iterator)
-        validate_citizen_data(citizen)
+def validate_import_data(import_data: list):
+    relatives_by_cid = {}
+    non_existent_relatives = set()
+    citizen_validator = CitizenValidator()
+    for citizen in import_data:
+        citizen_validator.validate(citizen)
         cid = citizen['citizen_id']
         # Если уже встречали этот id, значит он не уникальный в этой выборке
-        if cid in self._relatives_by_cid:
+        if cid in relatives_by_cid:
             raise DataValidationError(f'Non unique citizen_id `{cid}`')
-        self._relatives_by_cid[cid] = set(citizen['relatives'])
+        relatives_by_cid[cid] = set(citizen['relatives'])
         # Собираем id родственников, которых еще не встречали в выборке.
         # Потенциально их может не оказаться вообще
-        non_seen_relatives = filter(lambda rid: rid not in self._relatives_by_cid,
+        non_seen_relatives = filter(lambda rid: rid not in relatives_by_cid,
                                     citizen['relatives'])
-        self._non_existent_relatives.update(non_seen_relatives)
+        non_existent_relatives.update(non_seen_relatives)
         # Удаляем текущий cid из множества несуществующих родственников (если есть)
-        if cid in self._non_existent_relatives:
-            self._non_existent_relatives.remove(cid)
-        return citizen
+        if cid in non_existent_relatives:
+            non_existent_relatives.remove(cid)
 
-    def get_relatives_info(self):
-        return {
-            'non_existent_relatives': self._non_existent_relatives,
-            'relatives_by_cid': self._relatives_by_cid,
-        }
-
-
-class ImportDataValidator:
-    def __init__(self, import_data):
-        self._import_data = import_data
-        self._citizens_iterator = None
-
-    def __enter__(self):
-        self._citizens_iterator = ValidateCitizensIterator(self._import_data)
-        return self._citizens_iterator
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        info = self._citizens_iterator.get_relatives_info()
-        # Если после перебора всех жителей у нас остались не найденные родственники, ошибка
-        if info['non_existent_relatives']:
-            cnt = len(info['non_existent_relatives'])
-            raise DataValidationError(f'There are {cnt} non existent relatives')
-        # Проверяем родственные связи. Второй раз проходим по всем. TODO: подумать
-        # может всё-таки как-то можно ужать в один проход?
-        for cid, relatives in info['relatives_by_cid'].items():
-            for relative_cid in relatives:
-                if cid not in info['relatives_by_cid'][relative_cid]:
-                    raise DataValidationError(f'Invalid relatives for `{cid}`')
+    # Если после перебора всех жителей у нас остались не найденные родственники, ошибка
+    if non_existent_relatives:
+        cnt = len(non_existent_relatives)
+        raise DataValidationError(f'There are {cnt} non existent relatives')
+    # Проверяем родственные связи. Второй раз проходим по всем. TODO: подумать
+    # может всё-таки как-то можно ужать в один проход?
+    for cid, relatives in relatives_by_cid.items():
+        for relative_cid in relatives:
+            if cid not in relatives_by_cid[relative_cid]:
+                raise DataValidationError(f'Invalid relatives for `{cid}`')
