@@ -72,19 +72,23 @@ async def get_presents_by_month(request):
 
 async def get_age_percentiles(request):
     import_id = int(request.match_info['import_id'])
-    citizens = [data async for data in request.app.storage.get_citizens(import_id)]
+    ages_by_town = {}
+    async for data in request.app.storage.get_citizens(import_id):
+        town = data['town']
+        if town not in ages_by_town:
+            ages_by_town[town] = []
+        birth_dt = datetime.strptime(data['birth_date'], '%d.%m.%Y')
+        age = datetime.now().year - birth_dt.year
+        ages_by_town[town].append(age)
+
     age_percentiles = []
     percentile = functools.partial(np.percentile, interpolation='linear')
-    for town, citizens_in_town in groupby(citizens, key=lambda data: data['town']):
-        ages = []
-        for citizen in citizens_in_town:
-            birth_dt = datetime.strptime(citizen['birth_date'], '%d.%m.%Y')
-            age = datetime.now().year - birth_dt.year
-            ages.append(age)
-        age_percentiles.append({
+    age_percentiles = [
+        {
             'town': town,
             'p50': round(percentile(ages, 50), 2),
             'p75': round(percentile(ages, 75), 2),
             'p99': round(percentile(ages, 99), 2),
-        })
+        } for town, ages in ages_by_town.items()
+    ]
     return web.json_response(data={'data': age_percentiles})
