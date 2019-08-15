@@ -1,9 +1,10 @@
 phantom:
   address: ${CITIZENS_HOST}:80
   ammofile: ammo.txt
+  loop: 1
   load_profile:
     load_type: rps
-    schedule: line(1, 2, 1m)
+    schedule: line(1, 1, 2m)
 console:
   enabled: true
 telegraf:
