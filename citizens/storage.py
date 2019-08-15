@@ -22,7 +22,7 @@ class CitizensStorage:
     async def get_citizens(self, import_id):
         raise NotImplementedError()
 
-    async def get_one_citizen(self, import_id, citizen_id):
+    async def get_one_citizen(self, import_id, citizen_id, return_fields=None):
         raise NotImplementedError()
 
     async def update_citizen(self, import_id, citizen_id, new_values):
@@ -80,7 +80,7 @@ class MemoryStorage(CitizensStorage):  # используется в теста�
         for data in self._data[import_id].values():
             yield data
 
-    async def get_one_citizen(self, import_id, citizen_id):
+    async def get_one_citizen(self, import_id, citizen_id, return_fields=None):
         if citizen_id not in self._data[import_id]:
             raise CitizenNotFoundError(f'Citizen {citizen_id} not found.')
         return self._data[import_id][citizen_id]
@@ -142,7 +142,7 @@ class MongoStorage(CitizensStorage):
             del entry['_id']
             yield entry
 
-    async def get_one_citizen(self, import_id, citizen_id):
+    async def get_one_citizen(self, import_id, citizen_id, return_fields=None):
         citizen = self._get_collection(import_id).find_one(
             {'citizen_id': citizen_id})  # TODO: использовать _id
         if citizen is None:
@@ -228,9 +228,13 @@ class AsyncMongoStorage(CitizensStorage):
             del entry['_id']
             yield entry
 
-    async def get_one_citizen(self, import_id, citizen_id):
+    async def get_one_citizen(self, import_id, citizen_id, return_fields=None):
         collection = self._get_collection(import_id)
-        citizen = await self._async(collection.find_one, {'citizen_id': citizen_id})
+        citizen = await self._async(functools.partial(
+            collection.find_one,
+            {'citizen_id': citizen_id},
+            projection=return_fields
+        ))
         if citizen is None:
             raise CitizenNotFoundError(f'Citizen `{citizen_id}` not found.')
         del citizen['_id']
