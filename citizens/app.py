@@ -97,6 +97,8 @@ class CitizensRestApi:
         sock = None
         endpoint_name = None
         if unix_socket_path is not None:
+            host = None
+            port = None
             socket_dirpath = realpath(dirname(unix_socket_path))
             if not exists(socket_dirpath):
                 os.makedirs(socket_dirpath, exist_ok=True)
