@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 
 from aiohttp.test_utils import unittest_run_loop
@@ -15,8 +16,9 @@ class TestAsyncStorage(CitizensApiTestCase):
         })
 
     def tearDown(self):
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.storage.close())
         super().tearDown()
-        self.storage.close()
 
     @unittest_run_loop
     async def test_generate_import_id(self):

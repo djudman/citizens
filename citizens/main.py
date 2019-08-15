@@ -11,10 +11,17 @@ from citizens.app import CitizensRestApi
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Citizens REST API")
     parser.add_argument('--socket')
+    parser.add_argument('--host')
     parser.add_argument('--port')
     args = parser.parse_args()
 
-    CitizensRestApi().run(
-        port=args.port,
-        unix_socket_path=args.socket
-    )
+    kwargs = {}
+    if args.socket:
+        kwargs['unix_socket_path'] = args.socket
+    else:
+        if args.host:
+            kwargs['host'] = args.host
+        if args.port:
+            kwargs['port'] = args.port
+
+    CitizensRestApi().run(**kwargs)

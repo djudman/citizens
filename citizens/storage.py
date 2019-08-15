@@ -49,7 +49,7 @@ class CitizensStorage:
     async def drop_import(self, import_id):
         raise NotImplementedError()
 
-    def close(self):
+    async def close(self):
         pass
 
 
@@ -183,7 +183,7 @@ class MongoStorage(CitizensStorage):
     async def drop_import(self, import_id):
         self._get_collection(import_id).drop()
 
-    def close(self):
+    async def close(self):
         self._driver.close()
 
 
@@ -278,5 +278,5 @@ class AsyncMongoStorage(CitizensStorage):
         collection = self._get_collection(import_id)
         await self._async(collection.drop)
 
-    def close(self):
-        self._driver.close()
+    async def close(self):
+        await self._async(self._driver.close)

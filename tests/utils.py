@@ -8,10 +8,6 @@ from citizens.storage import MemoryStorage, MongoStorage, AsyncMongoStorage
 
 
 class CitizensApiTestCase(AioHTTPTestCase):
-    def tearDown(self):
-        super().tearDown()
-        self.app.storage.close()
-
     async def get_application(self):
         self.app = CitizensRestApi()._app
         self.app.storage = MemoryStorage()
