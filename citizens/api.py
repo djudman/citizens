@@ -1,12 +1,10 @@
-import asyncio
 import functools
-import math
 import numpy as np
-from aiojobs.aiohttp import atomic
 from datetime import datetime
 from itertools import groupby
 
 from aiohttp import web
+from aiojobs.aiohttp import atomic
 
 from citizens.data import DataValidationError, CitizenValidator, validate_import_data
 from citizens.storage import CitizenNotFoundError
@@ -19,14 +17,13 @@ class CitizensApiError(Exception):
 @atomic
 async def new_import(request):
     logger = request.app.logger
-    logger.debug('new import')
     import_data = await request.json()
     storage = request.app.storage
     validate_import_data(import_data)
     import_id = await storage.generate_import_id() # TODO: тут всё ещё есть проблема
     await storage.new_import(import_id, import_data)
     out = {'data': {'import_id': import_id}}
-    logger.debug(f'Data imported. import_id = {import_id}')
+    logger.debug(f'Data imported (import_id = {import_id})')
     return web.json_response(data=out, status=201)
 
 
