@@ -1,4 +1,5 @@
-host:=84.201.138.48
+host:=84.201.176.147  # тестовый стенд
+# host:=127.0.0.1 # пригождается для отладки
 
 all:
 	@./venv/citizens/bin/python setup.py sdist
