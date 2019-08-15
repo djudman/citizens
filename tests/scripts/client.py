@@ -50,9 +50,12 @@ class CitizensRestApiClient:
         print(self._target_host)
         generator = ImportDataGenerator()
         data = json.dumps(list(generator.generate_import_data(num_citizens)))
+        print('Data generated.')
         connection = HTTPConnection(self._target_host)
         connection.request('POST', '/imports', data)
+        print('Data sent.')
         connection.close()
+        print('Connection closed.')
         # TODO: пойти на сервер и убедиться, что все записи вставились
 
 
