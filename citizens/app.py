@@ -79,7 +79,7 @@ class CitizensRestApi:
             # loop=loop,
             logger=logging.getLogger('citizens'),
             middlewares=[errors_middleware],
-            client_max_size=1024 ** 3 * 2,  # 2Gb
+            client_max_size=1024 ** 2 * 100,  # 100 Mb
         )
         setup(app)
         app.storage = AsyncMongoStorage({'db': 'citizens'})
