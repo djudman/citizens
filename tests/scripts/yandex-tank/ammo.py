@@ -35,8 +35,8 @@ def create_ammo(target_host='localhost', num_imports=3, num_citizens_per_import=
             r = create_get_percentiles_request(target_host, import_id)
             requests.append(r)
         random.shuffle(requests)
-    for r in import_requests:
-        requests.insert(0, r)
+    for i, r in enumerate(import_requests):
+        requests.insert(i, r)
 
     with open(filename, 'w') as f:
         f.write('\n'.join(requests))
