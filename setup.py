@@ -20,5 +20,5 @@ setup(
     ],
     license='MIT',
     platforms=['Ubuntu >= 18.04'],
-    install_requires=['aiohttp', 'pymongo', 'numpy']
+    install_requires=['aiohttp', 'aiojobs', 'pymongo', 'numpy']
 )
