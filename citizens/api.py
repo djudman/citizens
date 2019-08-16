@@ -54,6 +54,8 @@ async def get_citizens(request):
 
 
 async def get_presents_by_month(request):
+    # TODO: ускорить
+    # [{$project: {_id:1, citizen_id: 1, relatives: 1, birth_date: {$dateFromString: {dateString: "$birth_date", format: "%d.%m.%Y"}}, num_relatives: {$size: "$relatives"}}}, {$match: { num_relatives: {$gt: 0}}}]
     import_id = int(request.match_info['import_id'])
     presents_by_month = {month: [] for month in range(1, 13)}
     async for citizen in request.app.storage.get_citizens(import_id):

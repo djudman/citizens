@@ -15,8 +15,16 @@ API
 =========
 Установка на локальную машину (для разработки/демонстрации/изучения)
 --------------------------------------------------------------------
-- Запустите тесты  
-    `$ make test`  
+- Скачайте архив с исходным кодом:  
+    `$ wget https://storage.yandexcloud.net/yandex-backend-school/citizens-0.0.1.tar.gz`
+- Извлеките содержимое архива  
+    `$ tar -xzf citizens-0.0.1.tar.gz`
+- Перейдите в извлеченную директорию  
+    `cd citizens-0.0.1`
+- Установите модуль
+    `python3 setup.py install`
+- Запустите приложение  
+    `$ python3 -m citizens`
 
 `TODO:`
 
@@ -34,7 +42,7 @@ API
             - `sudo service mongod start`
     - supervisor >= 3.3.1  
         - `$ sudo apt-get install -y supervisor`
-    - `$ sudo apt-get install -y python3-venv`  
+    - `$ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y python3-venv`  
     - make  
         - `$ sudo apt-get install make`
 
@@ -43,7 +51,7 @@ API
 $ wget -qO - https://www.mongodb.org/static/pgp/server-4.0.asc | sudo apt-key add -; \
 echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.0.list; \
 sudo apt-get update; \
-sudo apt-get install -y mongodb-org nginx supervisor python3-venv make; \
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mongodb-org nginx supervisor python3-venv make; \
 sudo service mongod start
 ```
 
@@ -109,3 +117,4 @@ sudo service mongod start
 - при установке пакета python3-venv нжно два раза нажимать enter. Сделать так, чтобы не надо было
 - надо как-то обрабатывать несуществующий import_id в GET запросах. 400 вернуть что ли, а то /imports/2/towns/stat/percentile/age отдает 200
 - создавать индекс по citizen_id
+- поправить комментарии в supervisor.conf, nginx.conf (про переменные окружения)

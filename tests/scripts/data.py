@@ -37,11 +37,11 @@ class ImportDataGenerator:
     def generate_citizen_data(self, max_citizen_id):
         citizen_id = self._next_citizen_id
         self._next_citizen_id += 1
-        if citizen_id not in self._relatives and random.randint(1, 100) > 50:
+        if citizen_id not in self._relatives and random.randint(1, 100) < 20:
             self._generate_relatives(citizen_id, max_citizen_id)
         return {
             'citizen_id': citizen_id,
-            'town': self._generate_string(5, 15),
+            'town': random.choice(string.ascii_uppercase),
             'street': self._generate_string(10, 20),
             'building': self._generate_string(2, 6),
             'apartment': random.randint(1, 300),
