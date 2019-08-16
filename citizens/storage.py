@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 from pymongo import MongoClient, ReturnDocument
@@ -44,6 +45,12 @@ class CitizensStorage:
         raise NotImplementedError()
 
     async def delete_relative_from(self, import_id, citizen_id, relative_id):
+        raise NotImplementedError()
+
+    async def get_presents_by_month(self, import_id):
+        raise NotImplementedError()
+
+    async def get_ages_by_town(self, import_id):
         raise NotImplementedError()
 
     async def drop_import(self, import_id):
@@ -99,6 +106,14 @@ class MemoryStorage(CitizensStorage):  # используется в теста�
 
     async def delete_relative_from(self, import_id, citizen_id, relative_id):
         self._data[import_id][citizen_id]['relatives'].remove(relative_id)
+
+    async def get_presents_by_month(self, import_id):
+        # TODO:
+        pass
+
+    async def get_ages_by_town(self, import_id):
+        # TODO:
+        pass
 
     async def drop_import(self, import_id):
         if import_id in self._data:
@@ -277,6 +292,43 @@ class AsyncMongoStorage(CitizensStorage):
         ))
         if not updated_data:
             raise CitizenNotFoundError(f'Citizen `{citizen_id}` not found.')
+
+    async def get_presents_by_month(self, import_id):
+        collection = self._get_collection(import_id)
+        return await self._async(collection.aggregate, [
+            {'$project': {'_id': 0, 'citizen_id': 1, 'relatives': 1, 'birth_date': {'$dateFromString': {'dateString': "$birth_date", 'format': "%d.%m.%Y"}}, 'num_relatives': {'$size': "$relatives"}}},
+            {'$match': { 'num_relatives': {'$gt': 0}}},
+            {'$unwind': "$relatives"},
+            {'$project': {'citizen_id': "$relatives", 'relative_birth_month': {'$month': "$birth_date"}, 'relative_id': "$citizen_id"}},
+            {'$group': {'_id': {'month': "$relative_birth_month", 'citizen_id': "$citizen_id"}, 'presents': {'$sum' : 1}}},
+            {'$group': {'_id': "$_id.month", 'citizens': {'$push': {'citizen_id': "$_id.citizen_id", 'presents': {'$sum': "$presents"}}}}},
+            {'$project': {'_id': 0, 'month': "$_id", 'citizens': 1}}
+        ])
+
+    async def get_ages_by_town(self, import_id):
+        collection = self._get_collection(import_id)
+        return await self._async(collection.aggregate, [
+            {
+                '$project': {
+                    '_id': 0,
+                    'town': 1,
+                    'citizen_id': 1,
+                    'age': {
+                        '$subtract': [
+                            { # current year
+                                '$year': datetime.datetime.now(),
+                            },
+                            { # birth year
+                                '$year': {'$dateFromString': {'dateString': "$birth_date", 'format': "%d.%m.%Y"}}
+                            }
+                        ]
+                    }
+                }
+            },
+            {'$group': { '_id': '$town', 'ages': {'$push': '$age'}}},
+            {'$project': {'_id': 0, 'town': "$_id", 'ages': 1}},
+            {'$sort': {'town': 1}}
+        ])
 
     async def drop_import(self, import_id):
         collection = self._get_collection(import_id)
