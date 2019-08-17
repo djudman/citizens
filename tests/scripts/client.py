@@ -33,7 +33,7 @@ class CitizensRestApiClient:
     async def import_data(self, num_imports=1, num_citizens=10000):
         t1 = time.time()
         generator = ImportDataGenerator()
-        data = json.dumps(list(generator.generate_import_data(num_citizens)))
+        data = json.dumps(generator.generate_import_data(num_citizens))
         requests = []
         for _ in range(num_imports):
             requests.append(
@@ -49,7 +49,7 @@ class CitizensRestApiClient:
     def import_and_break_connection(self, num_citizens=1000):
         print(self._target_host)
         generator = ImportDataGenerator()
-        data = json.dumps(list(generator.generate_import_data(num_citizens)))
+        data = json.dumps(generator.generate_import_data(num_citizens))
         print('Data generated.')
         connection = HTTPConnection(self._target_host)
         connection.request('POST', '/imports', data)
@@ -67,8 +67,6 @@ if __name__ == '__main__':
 
     host = args.host
     port = args.port
-    if host != '127.0.0.1':
-        port = 80
 
     client = CitizensRestApiClient(host=host, port=port)
     ############################################################################

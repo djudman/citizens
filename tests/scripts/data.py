@@ -37,7 +37,7 @@ class ImportDataGenerator:
     def generate_citizen_data(self, max_citizen_id):
         citizen_id = self._next_citizen_id
         self._next_citizen_id += 1
-        if citizen_id not in self._relatives and random.randint(1, 100) < 20:
+        if citizen_id not in self._relatives and random.randint(1, 100) < 30:
             self._generate_relatives(citizen_id, max_citizen_id)
         return {
             'citizen_id': citizen_id,
@@ -54,9 +54,11 @@ class ImportDataGenerator:
     def generate_import_data(self, num_citizens=100):
         self._next_citizen_id = 1
         self._relatives = {}
-        citizens = [self.generate_citizen_data(num_citizens) for _ in range(num_citizens)]
-        for data in citizens:
-            citizen_id = data['citizen_id']
+        citizens_data = [self.generate_citizen_data(num_citizens) for _ in range(num_citizens)]
+        out = []
+        for citizen_data in citizens_data:
+            citizen_id = citizen_data['citizen_id']
             if citizen_id in self._relatives:
-                data['relatives'] = list(self._relatives[citizen_id])
-            yield data
+                citizen_data['relatives'] = list(self._relatives[citizen_id])
+            out.append(citizen_data)
+        return {'citizens': out}

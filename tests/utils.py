@@ -10,9 +10,9 @@ from citizens.storage import MemoryStorage, MongoStorage, AsyncMongoStorage
 class CitizensApiTestCase(AioHTTPTestCase):
     async def get_application(self):
         self.app = CitizensRestApi()._app
-        self.app.storage = MemoryStorage()
+        # self.app.storage = MemoryStorage()
         # self.app.storage = MongoStorage({'db': 'test_citizens'})
-        # self.app.storage = AsyncMongoStorage({'db': 'test_citizens'})
+        self.app.storage = AsyncMongoStorage({'db': 'test_citizens'})
         return self.app
 
     async def api_request(self, http_method, uri, data=None):
@@ -28,5 +28,5 @@ class CitizensApiTestCase(AioHTTPTestCase):
         return response.status, response_data
 
     async def import_data(self, data):
-        _, data = await self.api_request('POST', '/imports', data)
+        _, data = await self.api_request('POST', '/imports', {'citizens': data})
         return data['data']['import_id']

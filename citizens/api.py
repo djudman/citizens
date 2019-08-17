@@ -18,10 +18,13 @@ class CitizensApiError(Exception):
 async def new_import(request):
     logger = request.app.logger
     import_data = await request.json()
+    if 'citizens' not in import_data:
+        raise DataValidationError('Key `citizens` not found.')
+    citizens = import_data['citizens']
     storage = request.app.storage
-    validate_import_data(import_data)
+    validate_import_data(citizens)
     import_id = await storage.generate_import_id() # TODO: тут всё ещё есть проблема
-    await storage.new_import(import_id, import_data)
+    await storage.new_import(import_id, citizens)
     out = {'data': {'import_id': import_id}}
     logger.debug(f'Data imported (import_id = {import_id})')
     return web.json_response(data=out, status=201)

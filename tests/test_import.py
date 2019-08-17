@@ -6,7 +6,7 @@ from tests.utils import CitizensApiTestCase
 class TestImport(CitizensApiTestCase):
     @unittest_run_loop
     async def test_save_import(self):
-        import_data = [
+        citizens = [
             {
                 "citizen_id": 1,
                 "town": "Москва",
@@ -30,7 +30,7 @@ class TestImport(CitizensApiTestCase):
                 "relatives": [1]
             }
         ]
-        status, data = await self.api_request('POST', '/imports', import_data)
+        status, data = await self.api_request('POST', '/imports', {'citizens': citizens})
         self.assertEquals(status, 201)
         self.assertIsNotNone(data)
         self.assertIn('data', data)
@@ -48,7 +48,7 @@ class TestImport(CitizensApiTestCase):
 
     @unittest_run_loop
     async def test_birth_date_invalid_format(self):
-        import_data = [
+        citizens = [
             {
                 "citizen_id": 1,
                 "town": "Москва",
@@ -61,12 +61,12 @@ class TestImport(CitizensApiTestCase):
                 "relatives": []
             },
         ]
-        status, data = await self.api_request('POST', '/imports', import_data)
+        status, _ = await self.api_request('POST', '/imports', {'citizens': citizens})
         self.assertEquals(status, 400)
 
     @unittest_run_loop
     async def test_birth_date_is_not_exists(self):
-        import_data = [
+        citizens = [
             {
                 "citizen_id": 1,
                 "town": "Москва",
@@ -79,12 +79,12 @@ class TestImport(CitizensApiTestCase):
                 "relatives": []
             },
         ]
-        status, data = await self.api_request('POST', '/imports', import_data)
+        status, _ = await self.api_request('POST', '/imports', {'citizens': citizens})
         self.assertEquals(status, 400)
 
     @unittest_run_loop
     async def test_relative_not_found_in_import(self):
-        import_data = [
+        citizens = [
             {
                 "citizen_id": 1,
                 "town": "Москва",
@@ -97,12 +97,12 @@ class TestImport(CitizensApiTestCase):
                 "relatives": [2]
             },
         ]
-        status, data = await self.api_request('POST', '/imports', import_data)
+        status, _ = await self.api_request('POST', '/imports', {'citizens': citizens})
         self.assertEquals(status, 400)
 
     @unittest_run_loop
     async def test_relative_is_not_mutual(self):
-        import_data = [
+        citizens = [
             {
                 "citizen_id": 1,
                 "town": "Москва",
@@ -126,12 +126,12 @@ class TestImport(CitizensApiTestCase):
                 "relatives": [3]
             },
         ]
-        status, data = await self.api_request('POST', '/imports', import_data)
+        status, _ = await self.api_request('POST', '/imports', {'citizens': citizens})
         self.assertEquals(status, 400)
 
     @unittest_run_loop
     async def test_not_unique_citizen_id(self):
-        import_data = [
+        citizens = [
             {
                 "citizen_id": 1,
                 "town": "Москва",
@@ -155,9 +155,13 @@ class TestImport(CitizensApiTestCase):
                 "relatives": []
             }
         ]
-        status, data = await self.api_request('POST', '/imports', import_data)
+        status, _ = await self.api_request('POST', '/imports', {'citizens': citizens})
         self.assertEquals(status, 400)
 
+    @unittest_run_loop
+    async def test_empty_input_data(self):
+        status, _ = await self.api_request('POST', '/imports', {})
+        self.assertEquals(status, 400)
 
     # TODO: test_town_is_empty
     # TODO: test_street_is_empty

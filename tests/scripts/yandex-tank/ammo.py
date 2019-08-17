@@ -63,12 +63,12 @@ def create_http_request(target_host, method, uri, data=None, tag='request'):
     )
 
 
-def create_import_request(target_host, import_data):
+def create_import_request(target_host: str, data: dict) -> str:
     return create_http_request(
         target_host,
         method='POST',
         uri='/imports',
-        data=list(import_data),
+        data=data,
         tag='import'
     )
 
