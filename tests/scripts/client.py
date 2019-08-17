@@ -11,7 +11,7 @@ from data import ImportDataGenerator
 
 
 class CitizensRestApiClient:
-    def __init__(self, host='127.0.0.1', port=8080):
+    def __init__(self, host='localhost', port=8080):
         self._target_host = f'{host}:{port}'
 
     async def async_http_request(self, http_method='GET', uri='/', body=None):
@@ -61,7 +61,7 @@ class CitizensRestApiClient:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Citizens REST API Test Client")
-    parser.add_argument('--host', default='127.0.0.1')
+    parser.add_argument('--host', default='localhost')
     parser.add_argument('--port', default=8080)
     args = parser.parse_args()
 
