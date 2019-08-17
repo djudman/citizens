@@ -36,10 +36,6 @@ async def errors_middleware(request, handler):
     return response
 
 
-async def shutdown(app):
-    await app.storage.close()
-
-
 class CitizensRestApi:
     def __init__(self):
         self._unix_socket = None
@@ -63,7 +59,9 @@ class CitizensRestApi:
                         makedirs(log_dir, exist_ok=True)
                     logging.config.dictConfig(config['logging'])
                     os.chdir(work_dir)
+                    self._logger.info(f'Loaded config {filepath}.')
                     return config
+        self._logger.warning('Config file not found. Loaded default config.')
         return {
             'logging': {'version': 1},
         }
@@ -90,7 +88,7 @@ class CitizensRestApi:
             web.get(r'/imports/{import_id:\d+}/citizens/birthdays', get_presents_by_month),
             web.get(r'/imports/{import_id:\d+}/towns/stat/percentile/age', get_age_percentiles),
         ])
-        app.on_cleanup.append(self._shutdown)
+        app.on_shutdown.append(self._shutdown)
         return app
 
     def run(self, host='127.0.0.1', port=8080, unix_socket_path=None):
