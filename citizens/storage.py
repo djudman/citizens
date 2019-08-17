@@ -3,6 +3,7 @@ import functools
 import datetime
 from concurrent.futures import ThreadPoolExecutor
 
+import pymongo
 from pymongo import MongoClient, ReturnDocument
 
 
@@ -211,7 +212,7 @@ class MongoStorage(CitizensStorage):
 class AsyncMongoStorage(CitizensStorage):
     def __init__(self, config):
         self._executor = ThreadPoolExecutor()
-        self._driver = MongoClient(host=config.get('host'), port=config.get('port'))
+        self._driver = pymongo.MongoClient(host=config.get('host'), port=config.get('port'))
         self._db = self._driver.get_database(config['db'])
         self._loop = asyncio.get_event_loop()
         self._async = functools.partial(self._loop.run_in_executor, self._executor)
@@ -230,13 +231,14 @@ class AsyncMongoStorage(CitizensStorage):
             collection.find_one_and_update,
             query,
             {'$inc': {'counter': 1}},
-            return_document=ReturnDocument.AFTER,
+            return_document=pymongo.ReturnDocument.AFTER,
             upsert=True
         ))
         return document['counter']
 
     async def new_import(self, import_id, data):
         collection = self._get_collection(import_id, create_if_not_exists=True)
+        collection.create_index([('citizen_id', pymongo.ASCENDING)], background=True)
         await self._async(collection.insert_many, data)
 
     async def insert_citizen(self, import_id: int, data: dict):
@@ -273,7 +275,7 @@ class AsyncMongoStorage(CitizensStorage):
             collection.find_one_and_update,
             query,
             {'$set': new_values},
-            return_document=ReturnDocument.AFTER
+            return_document=pymongo.ReturnDocument.AFTER
         ))
         if not updated_data:
             raise CitizenNotFoundError(f'Citizen `{citizen_id}` not found.')
@@ -286,7 +288,7 @@ class AsyncMongoStorage(CitizensStorage):
             collection.find_one_and_update,
             {'citizen_id': citizen_id},
             {'$addToSet': {'relatives': relative_id}},
-            return_document=ReturnDocument.AFTER
+            return_document=pymongo.ReturnDocument.AFTER
         ))
         if not updated_data:
             raise CitizenNotFoundError(f'Citizen `{citizen_id}` not found.')
@@ -297,7 +299,7 @@ class AsyncMongoStorage(CitizensStorage):
             collection.find_one_and_update,
             {'citizen_id': citizen_id},
             {'$pull': {'relatives': relative_id}},
-            return_document=ReturnDocument.AFTER
+            return_document=pymongo.ReturnDocument.AFTER
         ))
         if not updated_data:
             raise CitizenNotFoundError(f'Citizen `{citizen_id}` not found.')
