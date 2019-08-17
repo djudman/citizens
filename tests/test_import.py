@@ -39,7 +39,7 @@ class TestImport(CitizensApiTestCase):
         self.assertIsNotNone(import_id)
         self.assertIsInstance(import_id, int)
 
-        citizens = [data async for data in self.app.storage.get_citizens(import_id)]
+        citizens = list(await self.app.storage.get_citizens(import_id))
         self.assertEquals(citizens[0]['citizen_id'], 1)
         self.assertEquals(citizens[0]['name'], 'Иванов Сергей Иванович')
 

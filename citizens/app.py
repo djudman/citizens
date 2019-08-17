@@ -15,7 +15,7 @@ from citizens.api import (
     new_import, update_citizen, get_citizens, get_presents_by_month,
     get_age_percentiles
 )
-from citizens.storage import MongoStorage, AsyncMongoStorage, CitizenImportNotFound
+from citizens.storage import AsyncMongoStorage, CitizensImportNotFound
 
 
 @web.middleware
@@ -30,7 +30,7 @@ async def errors_middleware(request, handler):
     except DataValidationError as e:
         log_error(request, e)
         raise web.HTTPBadRequest()
-    except CitizenImportNotFound as e:
+    except CitizensImportNotFound as e:
         log_error(request, e)
         raise web.HTTPBadRequest()
     except Exception as e:
@@ -78,7 +78,8 @@ class CitizensRestApi:
             client_max_size=1024 ** 2 * 100,  # 100 Mb
         )
         setup(app)
-        app.storage = AsyncMongoStorage({'db': 'citizens'})
+        storage_config = self._config['storage']
+        app.storage = AsyncMongoStorage(storage_config)
         app.add_routes([
             web.post('/imports', new_import),
             web.patch(r'/imports/{import_id:\d+}/citizens/{citizen_id:\d+}', update_citizen),

@@ -1,4 +1,8 @@
 {
+	"storage": {
+		"db": "citizens",
+		"connection_string": "mongodb://localhost:27017"
+	},
 	"logging": {
 		"version": 1,
 		"disable_existing_loggers": false,

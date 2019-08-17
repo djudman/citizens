@@ -21,10 +21,8 @@ async def new_import(request):
     if 'citizens' not in import_data:
         raise DataValidationError('Key `citizens` not found.')
     citizens = import_data['citizens']
-    storage = request.app.storage
     validate_import_data(citizens)
-    import_id = await storage.generate_import_id() # TODO: тут всё ещё есть проблема
-    await storage.new_import(import_id, citizens)
+    import_id = await request.app.storage.import_citizens(citizens)
     out = {'data': {'import_id': import_id}}
     logger.debug(f'Data imported (import_id = {import_id})')
     return web.json_response(data=out, status=201)
@@ -34,19 +32,23 @@ async def new_import(request):
 async def update_citizen(request):
     import_id = int(request.match_info['import_id'])
     citizen_id = int(request.match_info['citizen_id'])
-    citizen_data = await request.json()
-    if not citizen_data:
+    values = await request.json()
+    if not values:
         raise DataValidationError('No values.')
-    if 'citizen_id' in citizen_data:
+    if 'citizen_id' in values:
         raise DataValidationError('Forbidden to update field `citizen_id`.')
-    CitizenValidator().validate(citizen_data, all_fields_required=False)
+    CitizenValidator().validate(values, all_fields_required=False)
+    storage = request.app.storage
     try:
-        if 'relatives' in citizen_data:
-            for relative_id in citizen_data['relatives']:
-                await request.app.storage.get_one_citizen(
-                    import_id, relative_id, return_fields=['citizen_id'])
-        updated_data = await request.app.storage.update_citizen(
-            import_id, citizen_id, citizen_data)
+        if 'relatives' in values:
+            relatives = list(await storage.get_citizens(
+                import_id,
+                filter={'citizen_id': values['relatives']},
+                return_fields=['citizen_id']
+            ))
+            if len(relatives) != len(values['relatives']):
+                raise CitizenNotFoundError('Relative not found.')
+        updated_data = await request.app.storage.update_citizen(import_id, citizen_id, values)
     except CitizenNotFoundError as e:
         raise DataValidationError('You try to set non existent citizens.') from e
     return web.json_response(data={'data': updated_data})
@@ -54,7 +56,7 @@ async def update_citizen(request):
 
 async def get_citizens(request):
     import_id = int(request.match_info['import_id'])
-    citizens = [data async for data in request.app.storage.get_citizens(import_id)]
+    citizens = list(await(request.app.storage.get_citizens(import_id)))
     return web.json_response(data={'data': citizens})
 
 
