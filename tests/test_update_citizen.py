@@ -256,3 +256,22 @@ class TestUpdateCitizen(CitizensApiTestCase):
         }
         status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
         self.assertEquals(status, 400)
+
+    @unittest_run_loop
+    async def test_no_new_values(self):
+        import_id = await self.import_data([
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "17.04.1997",
+                "gender": "male",
+                "relatives": []
+            }
+        ])
+        new_data = {}
+        status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
+        self.assertEquals(status, 400)

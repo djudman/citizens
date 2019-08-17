@@ -35,6 +35,8 @@ async def update_citizen(request):
     import_id = int(request.match_info['import_id'])
     citizen_id = int(request.match_info['citizen_id'])
     citizen_data = await request.json()
+    if not citizen_data:
+        raise DataValidationError('No values.')
     if 'citizen_id' in citizen_data:
         raise DataValidationError('Forbidden to update field `citizen_id`.')
     CitizenValidator().validate(citizen_data, all_fields_required=False)
