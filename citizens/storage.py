@@ -6,7 +6,15 @@ from concurrent.futures import ThreadPoolExecutor
 from pymongo import MongoClient, ReturnDocument
 
 
-class CitizenNotFoundError(Exception):
+class CitizenStorageError(Exception):
+    pass
+
+
+class CitizenImportNotFound(CitizenStorageError):
+    pass
+
+
+class CitizenNotFoundError(CitizenStorageError):
     pass
 
 
@@ -108,12 +116,10 @@ class MemoryStorage(CitizensStorage):  # используется в теста�
         self._data[import_id][citizen_id]['relatives'].remove(relative_id)
 
     async def get_presents_by_month(self, import_id):
-        # TODO:
-        pass
+        raise NotImplementedError('Supported by AsyncMongoStorage only.')
 
     async def get_ages_by_town(self, import_id):
-        # TODO:
-        pass
+        raise NotImplementedError('Supported by AsyncMongoStorage only.')
 
     async def drop_import(self, import_id):
         if import_id in self._data:
@@ -210,9 +216,12 @@ class AsyncMongoStorage(CitizensStorage):
         self._loop = asyncio.get_event_loop()
         self._async = functools.partial(self._loop.run_in_executor, self._executor)
 
-    def _get_collection(self, import_id):
+    def _get_collection(self, import_id, create_if_not_exists=False):
         collection_name = f'import_{import_id}'
-        return self._db.get_collection(collection_name)
+        names = list(self._db.list_collection_names(filter={'name': collection_name}))
+        if (len(names) == 0 and create_if_not_exists) or len(names) > 0:
+            return self._db.get_collection(collection_name)
+        raise CitizenImportNotFound(f'Import `{import_id}` does not exists.')
     
     async def generate_import_id(self):
         collection = self._db.get_collection('counters')
@@ -227,12 +236,12 @@ class AsyncMongoStorage(CitizensStorage):
         return document['counter']
 
     async def new_import(self, import_id, data):
-        collection = self._get_collection(import_id)
+        collection = self._get_collection(import_id, create_if_not_exists=True)
         await self._async(collection.insert_many, data)
 
     async def insert_citizen(self, import_id: int, data: dict):
         data['_id'] = data['citizen_id']
-        collection = self._get_collection(import_id)
+        collection = self._get_collection(import_id, create_if_not_exists=True)
         await self._async(functools.partial(
             collection.insert_one, data, bypass_document_validation=True))
 

@@ -83,3 +83,9 @@ class TestGetAgePercentiles(CitizensApiTestCase):
         self.assertEquals(stat[1]['p50'], 65)
         self.assertEquals(stat[1]['p75'], 67.5)
         self.assertEquals(stat[1]['p99'], 69.9)
+
+    @unittest_run_loop
+    async def test_import_does_not_exists(self):
+        import_id = 100
+        status, _ = await self.api_request('GET', f'/imports/{import_id}/towns/stat/percentile/age')
+        self.assertEquals(status, 400)

@@ -77,3 +77,9 @@ class TestGetPresentsByMonth(CitizensApiTestCase):
 
         for month in range(6, 13):
             self.assertEquals(len(presents_by_month[str(month)]), 0)
+
+    @unittest_run_loop
+    async def test_import_does_not_exists(self):
+        import_id = 100
+        status, _ = await self.api_request('GET', f'/imports/{import_id}/citizens/birthdays')
+        self.assertEquals(status, 400)

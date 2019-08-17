@@ -50,3 +50,9 @@ class TestGetCitizens(CitizensApiTestCase):
         self.assertEquals(citizens[1]['apartment'], 8)
         self.assertEquals(citizens[1]['birth_date'], '07.05.1987')
         self.assertEquals(len(citizens[1]['relatives']), 1)
+
+    @unittest_run_loop
+    async def test_import_does_not_exists(self):
+        import_id = 100
+        status, _ = await self.api_request('GET', f'/imports/{import_id}/citizens')
+        self.assertEquals(status, 400)

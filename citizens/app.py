@@ -15,7 +15,7 @@ from citizens.api import (
     new_import, update_citizen, get_citizens, get_presents_by_month,
     get_age_percentiles
 )
-from citizens.storage import MongoStorage, AsyncMongoStorage
+from citizens.storage import MongoStorage, AsyncMongoStorage, CitizenImportNotFound
 
 
 @web.middleware
@@ -28,6 +28,9 @@ async def errors_middleware(request, handler):
     try:
         response = await handler(request)
     except DataValidationError as e:
+        log_error(request, e)
+        raise web.HTTPBadRequest()
+    except CitizenImportNotFound as e:
         log_error(request, e)
         raise web.HTTPBadRequest()
     except Exception as e:
