@@ -73,11 +73,12 @@ def create_import_request(target_host: str, data: dict) -> str:
     )
 
 
-def create_patch_citizen_request(target_host, import_id, num_citizens):
-    citizen_id = random.randint(2, num_citizens)
+def create_patch_citizen_request(target_host, import_id, max_citizen_id):
+    citizen_id = random.randint(2, max_citizen_id)
+    num_relatives = random.randint(0, 5)
     new_values = {
         'name': 'Updated',
-        'relatives': [random.randint(1, num_citizens)]
+        'relatives': [random.randint(1, max_citizen_id) for _ in range(num_relatives)]
     }
     patch_citizen_request = create_http_request(
         target_host,
