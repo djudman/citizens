@@ -211,11 +211,11 @@ class MongoStorage(CitizensStorage):
 
 class AsyncMongoStorage(CitizensStorage):
     def __init__(self, config):
-        self._executor = ThreadPoolExecutor()
         self._driver = pymongo.MongoClient(host=config.get('host'), port=config.get('port'))
         self._db = self._driver.get_database(config['db'])
-        self._loop = asyncio.get_event_loop()
-        self._async = functools.partial(self._loop.run_in_executor, self._executor)
+        loop = asyncio.get_event_loop()
+        executor = ThreadPoolExecutor()
+        self._async = functools.partial(loop.run_in_executor, executor)
 
     def _get_collection(self, import_id, create_if_not_exists=False):
         collection_name = f'import_{import_id}'

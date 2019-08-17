@@ -1,15 +1,19 @@
 import asyncio
 import unittest
 
-from aiohttp.test_utils import unittest_run_loop
-
 from citizens.storage import AsyncMongoStorage, CitizenNotFoundError, CitizenImportNotFound
-from tests.utils import CitizensApiTestCase
 
 
-class TestAsyncStorage(CitizensApiTestCase):
+def run_loop(coro):
+    def wrapper(self):
+        return self._loop.run_until_complete(coro(self))
+    return wrapper
+
+
+class TestMongoStorage(unittest.TestCase):
     def setUp(self):
-        super().setUp()
+        self._loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self._loop)
         db_name = 'test_citizens'
         self.storage = AsyncMongoStorage({
             'host': 'localhost',
@@ -20,17 +24,15 @@ class TestAsyncStorage(CitizensApiTestCase):
             db.drop_collection(name)
 
     def tearDown(self):
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.storage.close())
-        super().tearDown()
+        self._loop.run_until_complete(self.storage.close())
 
-    @unittest_run_loop
+    @run_loop
     async def test_generate_import_id(self):
         import_id = await self.storage.generate_import_id()
         self.assertIsInstance(import_id, int)
         self.assertGreater(import_id, 0)
 
-    @unittest_run_loop
+    @run_loop
     async def test_insert_citizen(self):
         data = {
             'citizen_id': 2,
@@ -51,7 +53,7 @@ class TestAsyncStorage(CitizensApiTestCase):
         all_citizens_after = [data async for data in self.storage.get_citizens(import_id)]
         self.assertEqual(len(all_citizens_after), 1)
 
-    @unittest_run_loop
+    @run_loop
     async def test_get_one_citizen(self):
         data = {
             'citizen_id': 3,
@@ -66,14 +68,14 @@ class TestAsyncStorage(CitizensApiTestCase):
         }
         import_id = await self.storage.generate_import_id()
         with self.assertRaises(CitizenImportNotFound):
-            citizen = await self.storage.get_one_citizen(import_id, 3)
+            await self.storage.get_one_citizen(import_id, 3)
         await self.storage.insert_citizen(import_id, data)
         data = await self.storage.get_one_citizen(import_id, 3)
         self.assertIsNotNone(data)
         self.assertEqual(data['citizen_id'], 3)
         self.assertEqual(data['name'], 'Bob')
 
-    @unittest_run_loop
+    @run_loop
     async def test_update_citizen(self):
         data = {
             'citizen_id': 3,
@@ -99,7 +101,7 @@ class TestAsyncStorage(CitizensApiTestCase):
         for field in equalFields:
             self.assertEqual(dataBefore[field], dataAfter[field])
 
-    @unittest_run_loop
+    @run_loop
     async def test_import(self):
         import_id = await self.storage.generate_import_id()
         await self.storage.new_import(import_id, [{
@@ -116,7 +118,7 @@ class TestAsyncStorage(CitizensApiTestCase):
         all_citizens_after = [data async for data in self.storage.get_citizens(import_id)]
         self.assertEqual(len(all_citizens_after), 1)
 
-    @unittest_run_loop
+    @run_loop
     async def test_import_does_not_exists(self):
         with self.assertRaises(CitizenImportNotFound) as ctx:
             _ = [x async for x in self.storage.get_citizens(999)]

@@ -70,14 +70,9 @@ class CitizensRestApi:
         }
 
     def _create_app(self):
-        # TODO: здесь нужен new_event_loop() для случая, когда используем из кода 
-        # и хотим запускать и останавливать приложение несколько раз
-        # Надо разрулить с тестами
-
-        # loop = asyncio.get_event_loop()
-        # asyncio.set_event_loop(loop)
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         app = web.Application(
-            # loop=loop,
             logger=logging.getLogger('citizens'),
             middlewares=[errors_middleware],
             client_max_size=1024 ** 2 * 100,  # 100 Mb
