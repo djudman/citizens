@@ -6,11 +6,13 @@ from itertools import groupby
 from aiohttp import web
 from aiojobs.aiohttp import atomic
 
-from citizens.data import DataValidationError, CitizenValidator, validate_import_data
-from citizens.storage import CitizenNotFoundError
+from citizens.data import (
+    validate_import_data, CitizenValidator, DataValidationError
+)
+from citizens.storage import CitizenNotFound, ImportNotFound
 
 
-class CitizensApiError(Exception):
+class CitizensBadRequest(Exception):
     pass
 
 
@@ -19,9 +21,12 @@ async def new_import(request):
     logger = request.app.logger
     import_data = await request.json()
     if 'citizens' not in import_data:
-        raise DataValidationError('Key `citizens` not found.')
+        raise CitizensBadRequest('Key `citizens` not found.')
     citizens = import_data['citizens']
-    validate_import_data(citizens)
+    try:
+        validate_import_data(citizens)
+    except DataValidationError as e:
+        raise CitizensBadRequest('Invalid citizens data') from e
     import_id = await request.app.storage.import_citizens(citizens)
     out = {'data': {'import_id': import_id}}
     logger.debug(f'Data imported (import_id = {import_id})')
@@ -34,23 +39,27 @@ async def update_citizen(request):
     citizen_id = int(request.match_info['citizen_id'])
     values = await request.json()
     if not values:
-        raise DataValidationError('No values.')
+        raise CitizensBadRequest('No values.')
     if 'citizen_id' in values:
-        raise DataValidationError('Forbidden to update field `citizen_id`.')
-    CitizenValidator().validate(values, all_fields_required=False)
-    storage = request.app.storage
+        raise CitizensBadRequest('Forbidden to update field `citizen_id`.')
     try:
-        if 'relatives' in values:
-            relatives = list(await storage.get_citizens(
-                import_id,
-                filter={'citizen_id': values['relatives']},
-                return_fields=['citizen_id']
-            ))
-            if len(relatives) != len(values['relatives']):
-                raise CitizenNotFoundError('Relative not found.')
-        updated_data = await request.app.storage.update_citizen(import_id, citizen_id, values)
-    except CitizenNotFoundError as e:
-        raise DataValidationError('You try to set non existent citizens.') from e
+        CitizenValidator().validate(values, all_fields_required=False)
+    except DataValidationError as e:
+        raise CitizensBadRequest() from e
+    storage = request.app.storage
+    if 'relatives' in values:
+        new_relatives = values['relatives']
+        relatives = list(await storage.get_citizens(
+            import_id,
+            filter={'citizen_id': new_relatives},  # NOTE: citizen_id in new_relatives
+            return_fields=['citizen_id']
+        ))
+        if len(relatives) != len(new_relatives):
+            raise CitizensBadRequest('Invalid value for `relatives`.')
+    try:
+        updated_data = await storage.update_citizen(import_id, citizen_id, values)
+    except CitizenNotFound as e:
+        raise CitizensBadRequest() from e
     return web.json_response(data={'data': updated_data})
 
 

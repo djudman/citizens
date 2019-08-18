@@ -12,11 +12,15 @@ class CitizensStorageError(Exception):
     pass
 
 
-class CitizensImportNotFound(CitizensStorageError):
+class ImportNotFound(CitizensStorageError):
     pass
 
 
-class CitizenNotFoundError(CitizensStorageError):
+class CitizenNotFound(CitizensStorageError):
+    pass
+
+
+class RelativeNotFound(CitizensStorageError):
     pass
 
 
@@ -70,7 +74,7 @@ class AsyncMongoStorage(BaseCitizensStorage):
         db = self._db
         found = list(db.list_collection_names(filter={'name': name}))
         if not found and not create_if_not_exists:
-            raise CitizensImportNotFound(f'Import `{import_id}` does not exists.')
+            raise ImportNotFound(f'Import `{import_id}` does not exists.')
         obj = db.get_collection(name)
         self._collections_cache[name] = obj
         return obj
@@ -122,18 +126,28 @@ class AsyncMongoStorage(BaseCitizensStorage):
             return_document=pymongo.ReturnDocument.BEFORE
         )
         if not old_data:
-            raise CitizenNotFoundError(f'Citizen `{citizen_id}` not found.')
+            raise CitizenNotFound(f'Citizen `{citizen_id}` not found.')
         new_relatives = values.get('relatives')
         if new_relatives is not None:
             old_relatives = old_data['relatives']
+            # NOTE: Удаляем на той стороне меня из relatives
             for rid in old_relatives:
                 if rid not in new_relatives:
-                    # NOTE: Удаляем на той стороне меня из relatives
-                    await self._delete_relative(import_id, rid, citizen_id)
+                    try:
+                        await self._delete_relative(import_id, rid, citizen_id)
+                    except CitizenNotFound as e:
+                        # TODO: откатить обновленные данные. 
+                        # Но вот только их кто-нибудь может успеть обновить ещё раз
+                        raise RelativeNotFound(f'Relative `{rid}` not found.') from e
+            # NOTE: Добавляем на той стороне меня в relatives
             for rid in new_relatives:
                 if rid not in old_relatives:
-                    # NOTE: Добавляем на той стороне меня в relatives
-                    await self._add_relative(import_id, rid, citizen_id)
+                    try:
+                        await self._add_relative(import_id, rid, citizen_id)
+                    except CitizenNotFound as e:
+                        # TODO: откатить обновленные данные. 
+                        # Но вот только их кто-нибудь может успеть обновить ещё раз
+                        raise RelativeNotFound(f'Relative `{rid}` not found.') from e
         old_data.update(values)
         return old_data
 
@@ -146,7 +160,7 @@ class AsyncMongoStorage(BaseCitizensStorage):
             return_document=pymongo.ReturnDocument.AFTER
         )
         if not updated:
-            raise CitizenNotFoundError(f'Citizen `{citizen_id}` not found.')
+            raise CitizenNotFound(f'Citizen `{citizen_id}` not found.')
 
     async def _delete_relative(self, import_id, citizen_id, relative_id):
         collection = self._get_collection(import_id)
@@ -157,7 +171,7 @@ class AsyncMongoStorage(BaseCitizensStorage):
             return_document=pymongo.ReturnDocument.AFTER
         )
         if not updated:
-            raise CitizenNotFoundError(f'Citizen `{citizen_id}` not found.')
+            raise CitizenNotFound(f'Citizen `{citizen_id}` not found.')
 
     async def get_presents_by_month(self, import_id: int):
         collection = self._get_collection(import_id)

@@ -1,7 +1,7 @@
 import asyncio
 import unittest
 
-from citizens.storage import AsyncMongoStorage, CitizenNotFoundError, CitizensImportNotFound
+from citizens.storage import AsyncMongoStorage, ImportNotFound
 
 
 def run_loop(coro):
@@ -71,6 +71,6 @@ class TestMongoStorage(unittest.TestCase):
 
     @run_loop
     async def test_import_does_not_exists(self):
-        with self.assertRaises(CitizensImportNotFound) as ctx:
+        with self.assertRaises(ImportNotFound) as ctx:
             _ = list(await self.storage.get_citizens(999))
         self.assertEquals(str(ctx.exception), 'Import `999` does not exists.')

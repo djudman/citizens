@@ -9,31 +9,22 @@ from os.path import realpath, dirname, expanduser, join, exists
 from aiohttp import web
 from aiojobs.aiohttp import setup
 
-from citizens.data import DataValidationError
 from citizens.api import (
-    new_import, update_citizen, get_citizens, get_presents_by_month,
-    get_age_percentiles
+    CitizensBadRequest, new_import, update_citizen, get_citizens,
+    get_presents_by_month, get_age_percentiles
 )
-from citizens.storage import AsyncMongoStorage, CitizensImportNotFound
+from citizens.storage import AsyncMongoStorage, ImportNotFound
 
 
 @web.middleware
 async def errors_middleware(request, handler):
-
-    def log_error(request, exception):
-        message = '`{0} {1}` failed. {2}'.format(request.method, request.url, exception)
-        request.app.logger.error(message, exc_info=True)
-
     try:
         response = await handler(request)
-    except DataValidationError as e:
-        log_error(request, e)
-        raise web.HTTPBadRequest()
-    except CitizensImportNotFound as e:
-        log_error(request, e)
-        raise web.HTTPBadRequest()
     except Exception as e:
-        log_error(request, e)
+        message = '`{0} {1}` failed. {2}'.format(request.method, request.url, e)
+        request.app.logger.error(message, exc_info=True)
+        if type(e) in (CitizensBadRequest, ImportNotFound):
+            raise web.HTTPBadRequest()
         raise
     return response
 
@@ -46,7 +37,7 @@ class CitizensRestApi:
         self._app = self._create_app()
 
     def _load_config(self):  # TODO: сделать лучше
-            filename = 'citizens.config.json'
+        filename = 'citizens.config.json'
         search_path = (dirname(dirname(__file__)), '~', '~/.config')
         for dir_name in search_path:
             filepath = join(realpath(expanduser(dir_name)), filename)
