@@ -6,11 +6,14 @@ all:
 	@mv ./dist/citizens*.tar.gz ./
 	@make clean
 start:
-	@./venv/citizens/bin/python ./citizens/main.py
+	@./venv/citizens/bin/python ./citizens/__main__.py
 install:
 	@sh ./install.sh $(host)
 test:
 	@./venv/citizens/bin/python ./tests/run.py
+	@coverage run --include=citizens/* tests/run.py
+	@coverage report
+	@coverage html
 clean:
 	@rm -rf build
 	@rm -rf citizens.egg-info
