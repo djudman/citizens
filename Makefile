@@ -11,9 +11,6 @@ install:
 	@sh ./install.sh $(host)
 test:
 	@./venv/citizens/bin/python ./tests/run.py
-	@coverage run --include=citizens/* tests/run.py
-	@coverage report
-	@coverage html
 clean:
 	@rm -rf build
 	@rm -rf citizens.egg-info
