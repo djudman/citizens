@@ -4,6 +4,7 @@ import logging
 import logging.config
 import os
 import socket
+from contextlib import contextmanager
 from os.path import realpath, dirname, expanduser, join, exists
 
 from aiohttp import web
@@ -14,6 +15,16 @@ from citizens.api import (
     get_presents_by_month, get_age_percentiles
 )
 from citizens.storage import AsyncMongoStorage, ImportNotFound
+
+
+@contextmanager
+def cd(dirpath):
+    prevdir = os.getcwd()
+    os.chdir(expanduser(dirpath))
+    try:
+        yield
+    finally:
+        os.chdir(prevdir)
 
 
 @web.middleware
@@ -31,33 +42,31 @@ async def errors_middleware(request, handler):
 
 class CitizensRestApi:
     def __init__(self):
-        self._unix_socket = None
         self._logger = logging.getLogger('citizens')
-        self._config = self._load_config()
+        config_filepath = join(dirname(dirname(__file__)), 'citizens.config.json')
+        self._config = self._load_config(config_filepath)
+        self._unix_socket = None
         self._app = self._create_app()
 
-    def _load_config(self):  # TODO: сделать лучше
-        filename = 'citizens.config.json'
-        search_path = (dirname(dirname(__file__)), '~', '~/.config')
-        for dir_name in search_path:
-            filepath = join(realpath(expanduser(dir_name)), filename)
-            if exists(filepath):
-                work_dir = os.getcwd()
-                os.chdir(realpath(dirname(filepath)))
-                # TODO: контекстный менеджер про "перейти в директорию с конфигом"
-                with open(filepath) as f:
-                    config = json.load(f)
-                    log_dir = realpath(dirname(config['logging']['handlers']['citizens_file']['filename']))
-                    if not exists(log_dir):
-                        os.makedirs(log_dir, exist_ok=True)
-                    logging.config.dictConfig(config['logging'])
-                    os.chdir(work_dir)
-                    self._logger.info(f'Loaded config {filepath}.')
-                    return config
-        self._logger.warning('Config file not found. Loaded default config.')
-        return {
-            'logging': {'version': 1},
-        }
+    def _load_config(self, filepath):
+        if not exists(filepath):
+            self._logger.warning(f'Config file `{filepath}` not found. Loaded default config.')
+            return {
+                'logging': {'version': 1},
+                'storage': {'db': 'test', 'connection_string': 'localhost'},
+            }
+        config_dir = realpath(dirname(filepath))
+        with cd(config_dir): # чтобы относительные пути в конфиге были относительно самого конфига
+            with open(filepath) as f:
+                config = json.load(f)
+            logging_config = config['logging']
+            log_filename = logging_config['handlers']['citizens_file']['filename']
+            log_dir = realpath(dirname(log_filename))
+            if not exists(log_dir):
+                os.makedirs(log_dir, exist_ok=True)
+            logging.config.dictConfig(logging_config)
+        self._logger.info(f'Loaded config {filepath}.')
+        return config
 
     def _create_app(self):
         loop = asyncio.new_event_loop()
