@@ -9,6 +9,7 @@ configs/citizens.*
 *$py.class
 *.log
 *.code-workspace
+.coverage
 
 # build artifacts
 citizens.egg-info/
