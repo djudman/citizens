@@ -4,7 +4,6 @@ import logging
 import logging.config
 import os
 import socket
-from os import makedirs
 from os.path import realpath, dirname, expanduser, join, exists
 
 from aiohttp import web
@@ -47,7 +46,7 @@ class CitizensRestApi:
         self._app = self._create_app()
 
     def _load_config(self):  # TODO: сделать лучше
-        filename = 'citizens.config.json'
+            filename = 'citizens.config.json'
         search_path = (dirname(dirname(__file__)), '~', '~/.config')
         for dir_name in search_path:
             filepath = join(realpath(expanduser(dir_name)), filename)
@@ -59,7 +58,7 @@ class CitizensRestApi:
                     config = json.load(f)
                     log_dir = realpath(dirname(config['logging']['handlers']['citizens_file']['filename']))
                     if not exists(log_dir):
-                        makedirs(log_dir, exist_ok=True)
+                        os.makedirs(log_dir, exist_ok=True)
                     logging.config.dictConfig(config['logging'])
                     os.chdir(work_dir)
                     self._logger.info(f'Loaded config {filepath}.')
@@ -75,7 +74,7 @@ class CitizensRestApi:
         app = web.Application(
             logger=logging.getLogger('citizens'),
             middlewares=[errors_middleware],
-            client_max_size=1024 ** 2 * 100,  # 100 Mb
+            client_max_size=self._config.get('client_body_max_size', 1024 ** 2),
         )
         setup(app)
         storage_config = self._config['storage']
