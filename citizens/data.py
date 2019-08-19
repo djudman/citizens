@@ -38,18 +38,17 @@ class String(Field):
 
     def validate(self, value):
         super().validate(value)
-        if self._min_length is not None and len(value) < self._min_length:
-            raise FieldValidationError('Too short value. '
-                'Minimum {0} symbols expected.'.format(self._min_length))
-        if self._letter_or_digit_required and not self.has_letter_or_digit(value):
+        min_length = self._min_length
+        if min_length > 0 and len(value) < min_length:
+            message = f'Too short value. Minimum {min_length} symbols expected.'
+            raise FieldValidationError(message)
+        letters_digits = filter(lambda s: s.isalpha() or s.isdigit(), value)
+        if self._letter_or_digit_required and not any(letters_digits):
             raise FieldValidationError(f'At least one digit or letter required. Got: `{value}`')
-        if self._values is not None and value not in self._values:
+        if self._values and value not in self._values:
             possible_values = ', '.join(self._values)
-            raise FieldValidationError(f'Unexpected value `{value}`. '\
-                f'Possible values: {possible_values}')
-
-    def has_letter_or_digit(self, value):
-        return any(map(lambda s: s.isdigit() or s.isalpha(), value))
+            message = f'Unexpected value `{value}`. Possible values: {possible_values}'
+            raise FieldValidationError(message)
 
 
 class BirthDate(Field):
@@ -96,7 +95,7 @@ class CitizenValidator:
             'apartment': integer,
             'name': String(min_length=1),
             'birth_date': BirthDate(format='%d.%m.%Y'),
-            'gender': String(values=('male', 'female')),
+            'gender': String(values=set({'male', 'female'})),
             'relatives': ListOf(int, unique=True),
         }
 
