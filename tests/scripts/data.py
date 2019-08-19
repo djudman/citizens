@@ -16,7 +16,7 @@ class ImportDataGenerator:
         )
 
     def _generate_date(self):
-        year = random.randint(1900, datetime.datetime.now().year)
+        year = random.randint(1900, datetime.datetime.utcnow().date().year)
         month = random.randint(1, 12)
         day = random.randint(1, 28)
         return datetime.datetime(year=year, month=month, day=day).strftime('%d.%m.%Y')

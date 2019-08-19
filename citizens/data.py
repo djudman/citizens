@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from typing import List
 
 
@@ -22,15 +22,11 @@ class Field:
     def validate(self, value):
         if value is None:
             raise FieldValidationError('Value is None')
-        self._check_type(value)
-
-    def _check_type(self, value):
-        if isinstance(value, self._value_type):
-            return
-        expected_type_name = self._value_type.__name__
-        type_name = type(value).__name__
-        raise FieldValidationError('Invalid value type. '\
-            f'Expected `{expected_type_name}`, got `{type_name}`.')
+        if not isinstance(value, self._value_type):
+            type_name = type(value).__name__
+            expected = self._value_type.__name__
+            message = f'Invalid value type. Expected `{expected}`, got `{type_name}`.'
+            raise FieldValidationError(message)
 
 
 class String(Field):
@@ -54,6 +50,24 @@ class String(Field):
 
     def has_letter_or_digit(self, value):
         return any(map(lambda s: s.isdigit() or s.isalpha(), value))
+
+
+class BirthDate(Field):
+    def __init__(self, format='%d.%m.%Y'):
+        super().__init__(value_type=str)
+        self._format = format
+
+    def validate(self, value):
+        super().validate(value)
+        date_format = self._format
+        try:
+            date = datetime.datetime.strptime(value, date_format).date()
+        except ValueError as e:
+            message = f'Invalid format. Date format `{date_format}` expected'
+            raise FieldValidationError(message) from e
+        today = datetime.datetime.utcnow().date()
+        if date >= today:
+            raise FieldValidationError('Birth date must be earlier than today.')
 
 
 class ListOf(Field):
@@ -81,7 +95,7 @@ class CitizenValidator:
             'building': string,
             'apartment': integer,
             'name': String(min_length=1),
-            'birth_date': String(min_length=10),
+            'birth_date': BirthDate(format='%d.%m.%Y'),
             'gender': String(values=('male', 'female')),
             'relatives': ListOf(int, unique=True),
         }
@@ -98,11 +112,6 @@ class CitizenValidator:
                     # считаем лишний атрибут ошибкой
                     raise FieldValidationError(f'Unknown field `{name}`.')
                 fields[name].validate(value)
-                if name == 'birth_date':
-                    try:
-                        datetime.strptime(value, '%d.%m.%Y')
-                    except ValueError as e:
-                        raise FieldValidationError('Invalid format. Date format `dd.mm.yyyy` expected') from e
         except FieldValidationError as e:
             raise CitizenValidationError(f'Field `{name}` is invalid.') from e
         return data

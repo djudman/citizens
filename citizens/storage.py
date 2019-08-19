@@ -195,9 +195,7 @@ class AsyncMongoStorage(BaseCitizensStorage):
                     'citizen_id': 1,
                     'age': {
                         '$subtract': [
-                            { # current year
-                                '$year': datetime.datetime.now(),
-                            },
+                            datetime.datetime.utcnow().date().year,
                             { # birth year
                                 '$year': {'$dateFromString': {'dateString': "$birth_date", 'format': "%d.%m.%Y"}}
                             }

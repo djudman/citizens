@@ -12,8 +12,8 @@ class TestGetAgePercentiles(CitizensApiTestCase):
         self._counter = 1
 
     def _make_citizen_data(self, town, age):
-        now = datetime.datetime.now()
-        birth_date = datetime.date(year=(now.year - age), month=now.month, day=now.day)
+        today = datetime.datetime.utcnow().date()
+        birth_date = datetime.date(year=(today.year - age), month=today.month, day=today.day)
         data = {
             'citizen_id': self._counter,
             'town': town,
