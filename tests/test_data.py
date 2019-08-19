@@ -222,6 +222,43 @@ class TestData(unittest.TestCase):
             validate_import_data(import_data)
         self.assertEqual(str(e.exception), 'Field `birth_date` is invalid.')
 
+    def test_birth_date_invalid_value2(self):
+        import_data = [
+            {
+                "citizen_id": 1,
+                "town": "Амстердам",
+                "street": "Ленина",
+                "building": "16к7стр5",
+                "apartment": 365,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "001.02.1997",
+                "gender": "male",
+                "relatives": []
+            },
+        ]
+        with self.assertRaises(DataValidationError) as e:
+            validate_import_data(import_data)
+        self.assertEqual(str(e.exception), 'Field `birth_date` is invalid.')
+
+    def test_birth_date_invalid_value3(self):
+        import_data = [
+            {
+                "citizen_id": 1,
+                "town": "Амстердам",
+                "street": "Ленина",
+                "building": "16к7стр5",
+                "apartment": 365,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "00.00.0000",
+                "gender": "male",
+                "relatives": []
+            },
+        ]
+        with self.assertRaises(DataValidationError) as e:
+            validate_import_data(import_data)
+        self.assertEqual(str(e.exception), 'Field `birth_date` is invalid.')
+
+
     def test_birth_date_invalid_format(self):
         import_data = [
             {

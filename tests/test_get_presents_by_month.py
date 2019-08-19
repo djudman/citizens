@@ -69,7 +69,7 @@ class TestGetPresentsByMonth(CitizensApiTestCase):
                 "building": "16к7стр5",
                 "apartment": 8,
                 "name": "Петр",
-                "birth_date": "17.03.1987",
+                "birth_date": "17.03.1997",
                 "gender": "male",
                 "relatives": [1]
             }

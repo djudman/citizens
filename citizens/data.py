@@ -1,4 +1,5 @@
 import datetime
+import re
 from typing import List
 
 
@@ -55,16 +56,19 @@ class String(Field):
 
 
 class BirthDate(Field):
-    def __init__(self, format='%d.%m.%Y'):
+    def __init__(self):
         super().__init__(value_type=str)
-        self._format = format
 
     def validate(self, value):
         super().validate(value)
-        date_format = self._format
         try:
-            date = datetime.datetime.strptime(value, date_format).date()
-        except ValueError as e:
+            regex = re.compile(r'^(?P<day>\d\d?)\.(?P<month>\d\d?)\.(?P<year>\d{4})$')
+            matched = regex.match(value)
+            if not matched:
+                raise FieldValidationError('Invalid date format.')
+            day, month, year = int(matched.group('day')), int(matched.group('month')), int(matched.group('year'))
+            date = datetime.date(year=year, month=month, day=day)
+        except Exception as e:
             raise FieldValidationError(str(e))
         today = datetime.datetime.utcnow().date()
         if date >= today:
@@ -98,7 +102,7 @@ class CitizenValidator:
             'building': string,
             'apartment': integer,
             'name': String(min_length=1),
-            'birth_date': BirthDate(format='%d.%m.%Y'),
+            'birth_date': BirthDate(),
             'gender': String(values=set({'male', 'female'})),
             'relatives': ListOf(int, unique=True),
         }

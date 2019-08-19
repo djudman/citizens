@@ -117,11 +117,7 @@ sudo service mongod start
 Хотя, конечно, кода гораздо меньше получается, если использовать marshmallow.
 
  `TODO:`
-- UTC time. Не зависеть от системного времени datetime.utcnow()
 - дописать README.md
-- проверка даты на существование через datetime.date
-    - day, month, year = birth_date.split('.'); datetime.date(int(year), int(month), int(day))
-    - понять что быстрее: текущий способ или этот
 - почитать тесты, написать еще юнит тестов
 - при установке софта менять timezone на Europe/Moscow
 - проверить, что сервис доступен из внутренней сети виртуалки на порту 8080
