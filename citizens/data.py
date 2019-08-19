@@ -15,9 +15,10 @@ class FieldValidationError(CitizenValidationError):
 
 
 class Field:
-    def __init__(self, *, required=True, value_type=object):
+    def __init__(self, *, required=True, value_type=object, validator=None):
         self.required = required
         self._value_type = value_type
+        self._validator = validator
 
     def validate(self, value):
         if value is None:
@@ -27,6 +28,8 @@ class Field:
             expected = self._value_type.__name__
             message = f'Invalid value type. Expected `{expected}`, got `{type_name}`.'
             raise FieldValidationError(message)
+        if self._validator is not None and not self._validator(value):
+            raise FieldValidationError(f'Invalid value `{value}`')
 
 
 class String(Field):
@@ -62,8 +65,7 @@ class BirthDate(Field):
         try:
             date = datetime.datetime.strptime(value, date_format).date()
         except ValueError as e:
-            message = f'Invalid format. Date format `{date_format}` expected'
-            raise FieldValidationError(message) from e
+            raise FieldValidationError(str(e))
         today = datetime.datetime.utcnow().date()
         if date >= today:
             raise FieldValidationError('Birth date must be earlier than today.')
@@ -77,16 +79,18 @@ class ListOf(Field):
 
     def validate(self, value):
         super().validate(value)
-        if any(not isinstance(element, self._element_type) for element in value):
+        if any(filter(lambda v: not isinstance(v, self._element_type), value)):
             raise FieldValidationError('Invalid element type.')
+        if any(filter(lambda v: v <= 0, value)):
+            raise FieldValidationError('All elements must be positive.')
         if self._unique and len(value) != len(set(value)):
             raise FieldValidationError('All elements must be unique.')
 
 
 class CitizenValidator:
     def __init__(self):
-        integer = Field(value_type=int)
-        string = String(min_length=1, letter_or_digit_required=True)
+        integer = Field(value_type=int, validator=lambda v: v > 0)
+        string = String(letter_or_digit_required=True)
         self._fields = {
             'citizen_id': integer,
             'town': string,

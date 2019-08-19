@@ -167,3 +167,75 @@ class TestData(unittest.TestCase):
         with self.assertRaises(DataValidationError) as e:
             validate_import_data(import_data)
         self.assertEqual(str(e.exception), 'Field `gender` is invalid.')
+
+    def test_citizen_id_invalid_value(self):
+        import_data = [
+            {
+                "citizen_id": -1,
+                "town": "Амстердам",
+                "street": "Ленина",
+                "building": "16к7стр5",
+                "apartment": 365,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "01.02.1997",
+                "gender": "male",
+                "relatives": []
+            },
+        ]
+        with self.assertRaises(DataValidationError) as e:
+            validate_import_data(import_data)
+        self.assertEqual(str(e.exception), 'Field `citizen_id` is invalid.')
+
+    def test_relative_id_invalid_value(self):
+        import_data = [
+            {
+                "citizen_id": 1,
+                "town": "Амстердам",
+                "street": "Ленина",
+                "building": "16к7стр5",
+                "apartment": 365,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "01.02.1997",
+                "gender": "male",
+                "relatives": ['2']
+            },
+        ]
+        with self.assertRaises(DataValidationError) as e:
+            validate_import_data(import_data)
+        self.assertEqual(str(e.exception), 'Field `relatives` is invalid.')
+
+    def test_birth_date_invalid_value(self):
+        import_data = [
+            {
+                "citizen_id": 1,
+                "town": "Амстердам",
+                "street": "Ленина",
+                "building": "16к7стр5",
+                "apartment": 365,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "31.02.1997",
+                "gender": "male",
+                "relatives": []
+            },
+        ]
+        with self.assertRaises(DataValidationError) as e:
+            validate_import_data(import_data)
+        self.assertEqual(str(e.exception), 'Field `birth_date` is invalid.')
+
+    def test_birth_date_invalid_format(self):
+        import_data = [
+            {
+                "citizen_id": 1,
+                "town": "Амстердам",
+                "street": "Ленина",
+                "building": "16к7стр5",
+                "apartment": 365,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "11/02/1997",
+                "gender": "male",
+                "relatives": []
+            },
+        ]
+        with self.assertRaises(DataValidationError) as e:
+            validate_import_data(import_data)
+        self.assertEqual(str(e.exception), 'Field `birth_date` is invalid.')
