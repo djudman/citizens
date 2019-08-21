@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from os.path import realpath, dirname, expanduser, join, exists
 
 from aiohttp import web
-from aiojobs.aiohttp import setup
+from aiojobs.aiohttp import setup as aiojobs_setup
 
 from citizens.api import (
     CitizensBadRequest, new_import, update_citizen, get_citizens,
@@ -40,6 +40,24 @@ async def errors_middleware(request, handler):
     return response
 
 
+# NOTE: используется только если в конфиге выставлен `debug: true`
+@web.middleware
+async def logging_middleware(request, handler):
+    import hashlib
+    import time
+    import random
+    import sys
+
+    logger = request.app.logger
+    request_id = '{0}{1}{2}{3}'.format(time.time(), request.method, request.url, random.randint(0, sys.maxsize)).encode()
+    request_id = hashlib.sha256(request_id).hexdigest()[:10]
+    logger.debug('> [{0}] {1} {2}'.format(request_id, request.method, request.url))
+    response = await handler(request)
+    status = '{0} {1}'.format(response.status, response.reason)
+    logger.debug('< [{0}] {1} {2}'.format(request_id, status, response.body[:50]))
+    return response
+
+
 class CitizensRestApi:
     def __init__(self):
         self._logger = logging.getLogger('citizens')
@@ -56,7 +74,7 @@ class CitizensRestApi:
                 'storage': {'db': 'test', 'connection_string': 'localhost'},
             }
         config_dir = realpath(dirname(filepath))
-        with cd(config_dir): # чтобы относительные пути в конфиге были относительно самого конфига
+        with cd(config_dir):  # чтобы относительные пути в конфиге были относительно самого конфига
             with open(filepath) as f:
                 config = json.load(f)
             logging_config = config['logging']
@@ -71,13 +89,14 @@ class CitizensRestApi:
     def _create_app(self):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        app = web.Application(
-            logger=logging.getLogger('citizens'),
-            middlewares=[errors_middleware],
-            client_max_size=self._config.get('client_body_max_size', 1024 ** 2),
-        )
-        setup(app)
+        client_body_max_size = self._config.get('client_body_max_size', 1024 ** 2)
+        middlewares = [errors_middleware]
+        if self._config.get('debug'):
+            middlewares.append(logging_middleware)
+        app = web.Application(logger=self._logger, middlewares=middlewares, client_max_size=client_body_max_size)
+        aiojobs_setup(app)
         storage_config = self._config['storage']
+        # TODO: тут можно брать класс из конфига и создавать обект указанного в конфиге класса
         app.storage = AsyncMongoStorage(storage_config)
         app.add_routes([
             web.post('/imports', new_import),
@@ -89,7 +108,7 @@ class CitizensRestApi:
         app.on_shutdown.append(self._shutdown)
         return app
 
-    def run(self, host='127.0.0.1', port=8080, unix_socket_path=None):
+    def run(self, host='localhost', port=8080, unix_socket_path=None):
         sock = None
         endpoint_name = None
         if unix_socket_path is not None:

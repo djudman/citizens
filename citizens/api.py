@@ -7,7 +7,7 @@ from aiojobs.aiohttp import atomic
 from citizens.data import (
     validate_import_data, CitizenValidator, DataValidationError
 )
-from citizens.storage import CitizenNotFound, ImportNotFound
+from citizens.storage import CitizenNotFound
 
 
 class CitizensBadRequest(Exception):
@@ -16,7 +16,6 @@ class CitizensBadRequest(Exception):
 
 @atomic
 async def new_import(request):
-    logger = request.app.logger
     import_data = await request.json()
     if 'citizens' not in import_data:
         raise CitizensBadRequest('Key `citizens` not found.')
@@ -27,7 +26,6 @@ async def new_import(request):
         raise CitizensBadRequest('Invalid citizens data') from e
     import_id = await request.app.storage.import_citizens(citizens)
     out = {'data': {'import_id': import_id}}
-    logger.debug(f'Data imported (import_id = {import_id})')
     return web.json_response(data=out, status=201)
 
 
@@ -43,7 +41,7 @@ async def update_citizen(request):
     try:
         CitizenValidator().validate(values, all_fields_required=False)
     except DataValidationError as e:
-        raise CitizensBadRequest() from e
+        raise CitizensBadRequest('Invalid values') from e
     storage = request.app.storage
     if 'relatives' in values:
         new_relatives = values['relatives']
