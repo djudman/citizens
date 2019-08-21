@@ -3,7 +3,6 @@ import importlib.util
 import os
 from os.path import dirname
 import sys
-import time
 import unittest
 
 

@@ -103,7 +103,7 @@ class CitizenValidator:
             'apartment': integer,
             'name': String(min_length=1),
             'birth_date': BirthDate(),
-            'gender': String(values=set({'male', 'female'})),
+            'gender': String(values={'male', 'female'}),
             'relatives': ListOf(int, unique=True),
         }
 

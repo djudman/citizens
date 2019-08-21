@@ -1,7 +1,5 @@
 import functools
 import numpy as np
-from datetime import datetime
-from itertools import groupby
 
 from aiohttp import web
 from aiojobs.aiohttp import atomic
