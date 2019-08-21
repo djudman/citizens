@@ -30,7 +30,7 @@ API
     `python3 -m citizens`  
 - Сервис будет запущен на порту `8080` на всех интерфейсах (`0.0.0.0`)  
 - Сделайте тестовый запрос и убедись, что сервис работает:  
-`curl -X POST --data '[{"citizen_id": 1,"town": "Москва","street": "Льва Толстого","building": "16к7стр5","apartment": 7,"name": "Иванов Сергей Иванович","birth_date": "17.04.1999","gender": "male","relatives": []}]' http://0.0.0.0:8080/imports`  
+`curl -X POST --data '{"citizens":[{"citizen_id": 1,"town": "Москва","street": "Льва Толстого","building": "16к7стр5","apartment": 7,"name": "Иванов Сергей Иванович","birth_date": "17.04.1999","gender": "male","relatives": []}]}' http://0.0.0.0:8080/imports`  
 
 
 Установка на сервер
@@ -80,7 +80,7 @@ API
 
 Примеры тестовых запросов:  
 
-- `curl -X POST --data '[{"citizen_id": 1,"town": "Москва","street": "Льва Толстого","building": "16к7стр5","apartment": 7,"name": "Иванов Сергей Иванович","birth_date": "17.04.1999","gender": "male","relatives": []}]' http://0.0.0.0:8080/imports`  
+- `curl -X POST --data '{"citizens":[{"citizen_id": 1,"town": "Москва","street": "Льва Толстого","building": "16к7стр5","apartment": 7,"name": "Иванов Сергей Иванович","birth_date": "17.04.1999","gender": "male","relatives": []}]}' http://0.0.0.0:8080/imports`  
   
 - `curl -X GET http://0.0.0.0:8080/imports/1/citizens`  
 
