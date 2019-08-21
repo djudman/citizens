@@ -11,7 +11,7 @@ from citizens.app import CitizensRestApi
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Citizens REST API')
     parser.add_argument('--socket')
-    parser.add_argument('--host', default='localhost')
+    parser.add_argument('--host', default='0.0.0.0')
     parser.add_argument('--port', default=8080)
     args = parser.parse_args()
     if args.socket:
