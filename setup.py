@@ -2,15 +2,18 @@
 
 from setuptools import setup
 
+version = '0.1'
+download_url = f'https://storage.yandexcloud.net/yandex-backend-school/citizens-{version}.tar.gz'
+
 setup(
     name='citizens',
-    version='0.0.1',
-    description='REST API service for yandex backend school',
-    long_description='REST API service for yandex backend school',
+    version=version,
+    description='REST API service for Yandex backend school',
+    long_description='A task for joining Yandex backend school (autumn 2019)',
     author='Dmitrii Dorofeev',
     author_email='d.d0r0feev@yandex.ru',
-    url='https://storage.yandexcloud.net/yandex-backend-school/citizens-0.0.1.tar.gz',
-    download_url='https://storage.yandexcloud.net/yandex-backend-school/citizens-0.0.1.tar.gz',
+    url=download_url,
+    download_url=download_url,
     packages=['citizens', 'tests'],
     data_files=[
         ('configs', ['configs/nginx.conf', 'configs/supervisor.conf']),

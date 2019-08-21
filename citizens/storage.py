@@ -33,8 +33,8 @@ class BaseCitizensStorage(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def get_citizens(self, import_id: int, query: dict=None,
-                           return_fields: List[str]=None):
+    async def get_citizens(self, import_id: int, query: dict = None,
+                           return_fields: List[str] = None):
         pass
 
     @abstractmethod

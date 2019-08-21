@@ -1,6 +1,5 @@
 import datetime
 import re
-from typing import List
 
 
 class DataValidationError(Exception):

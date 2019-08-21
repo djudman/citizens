@@ -1,4 +1,5 @@
 {
+	"debug": true,
 	"client_body_max_size": 104857600,
 	"storage": {
 		"db": "citizens",

@@ -49,7 +49,8 @@ async def logging_middleware(request, handler):
     import sys
 
     logger = request.app.logger
-    request_id = '{0}{1}{2}{3}'.format(time.time(), request.method, request.url, random.randint(0, sys.maxsize)).encode()
+    request_id = '{0}{1}{2}{3}'.format(time.time(), request.method, request.url,
+                                       random.randint(0, sys.maxsize)).encode()
     request_id = hashlib.sha256(request_id).hexdigest()[:10]
     logger.debug('> [{0}] {1} {2}'.format(request_id, request.method, request.url))
     response = await handler(request)
