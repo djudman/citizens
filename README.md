@@ -1,6 +1,6 @@
 # yandex-backend-school-rest-api
 Вступительное задание для школы бэкенд разработки в Яндексе. REST API сервис.  
-Формулировка задачи: https://yadi.sk/i/sw-6yNV0VBvZvQ
+Формулировка задачи: https://yadi.sk/i/dA9umaGbQdMNLw
 
 API
 ===
@@ -18,6 +18,9 @@ API
 - Вам потребуется python 3.7.3  
 (скорее всего, всё будет работать и на python >= 3.5.3, но я не проверял)  
   
+- Убедитесь, что у вас установлен Python модуль `setuptools`
+  - Например, можно запустить интерпретатор Python и выполнить `import setuptools`
+  - Если модуля нет, то установите его, например, командой `sudo apt install python-setuptools` (в Ubuntu)
 - Скачайте архив с исходным кодом:  
     `wget https://storage.yandexcloud.net/yandex-backend-school/citizens-0.0.1.tar.gz`
 - Извлеките содержимое архива  
