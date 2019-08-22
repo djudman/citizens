@@ -163,10 +163,39 @@ class TestImport(CitizensApiTestCase):
         status, _ = await self.api_request('POST', '/imports', {})
         self.assertEquals(status, 400)
 
-    # TODO: test_town_is_empty
-    # TODO: test_street_is_empty
-    # TODO: test_building_is_empty
-    # TODO: test_apartment_is_not_number
-    # TODO: test_name_is_empty
-    # TODO: test_gender_invalid_value
-    # TODO: test_self_in_relatives
+    @unittest_run_loop
+    async def test_redundant_field(self):
+        citizens = [
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "01.02.1997",
+                "gender": "male",
+                "relatives": [],
+                "one_more_field": 1,
+            },
+        ]
+        status, _ = await self.api_request('POST', '/imports', {'citizens': citizens})
+        self.assertEquals(status, 400)
+
+    @unittest_run_loop
+    async def test_no_field(self):
+        citizens = [
+            {
+                "citizen_id": 1,
+                "town": "Москва",
+                "street": "Льва Толстого",
+                "building": "16к7стр5",
+                "apartment": 7,
+                "name": "Иванов Сергей Иванович",
+                "birth_date": "01.02.1997",
+                "gender": "male",
+                # "relatives": [],
+            },
+        ]
+        status, _ = await self.api_request('POST', '/imports', {'citizens': citizens})
+        self.assertEquals(status, 400)

@@ -1,7 +1,7 @@
 import time
 import unittest
 
-from citizens.data import CitizenValidator
+from citizens.schema import CitizenSchema
 
 marshmallow_is_not_installed = False
 try:
@@ -19,7 +19,7 @@ try:
             raise ValidationError('Value must be positive')
 
 
-    class CitizenSchema(Schema):
+    class MarshmallowCitizenSchema(Schema):
         citizen_id = fields.Int(strict=True, validate=validate_int)
         town = fields.Str(validate=letter_or_digit_required)
         street = fields.Str(validate=letter_or_digit_required)
@@ -61,17 +61,17 @@ class TestMarshmallow(unittest.TestCase):
     def test_speed(self):
         for _ in range(1):
             t1 = time.time()
-            schema = CitizenSchema()
+            schema = MarshmallowCitizenSchema()
             for data in self.citizens:
                 errors = schema.validate(data)
                 if errors:
                     break
             marshmallow = time.time() - t1
-            validator = CitizenValidator()
+            schema = CitizenSchema()
             t1 = time.time()
             try:
                 for data in self.citizens:
-                    validator.validate(data)
+                    schema.validate(data)
             except Exception:
                 pass
             my_one = time.time() - t1

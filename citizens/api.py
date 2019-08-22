@@ -4,8 +4,8 @@ import numpy as np
 from aiohttp import web
 from aiojobs.aiohttp import atomic
 
-from citizens.data import (
-    validate_import_data, CitizenValidator, DataValidationError
+from citizens.schema import (
+    validate_citizens, CitizenSchema, DataValidationError
 )
 from citizens.storage import CitizenNotFound
 
@@ -21,7 +21,7 @@ async def new_import(request):
         raise CitizensBadRequest('Key `citizens` not found.')
     citizens = import_data['citizens']
     try:
-        validate_import_data(citizens)
+        validate_citizens(citizens)
     except DataValidationError as e:
         raise CitizensBadRequest('Invalid citizens data') from e
     import_id = await request.app.storage.import_citizens(citizens)
@@ -39,7 +39,7 @@ async def update_citizen(request):
     if 'citizen_id' in values:
         raise CitizensBadRequest('Forbidden to update field `citizen_id`.')
     try:
-        CitizenValidator().validate(values, all_fields_required=False)
+        CitizenSchema().validate(values, partial=True)
     except DataValidationError as e:
         raise CitizensBadRequest('Invalid values') from e
     storage = request.app.storage
