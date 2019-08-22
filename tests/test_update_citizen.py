@@ -251,11 +251,25 @@ class TestUpdateCitizen(CitizensApiTestCase):
                 "relatives": []
             }
         ])
-        new_data = {
-            'xxx': 'xxx',
-        }
+        new_data = {'xxx': 'xxx'}
         status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
         self.assertEquals(status, 400)
+
+        new_data = {'name': 'test'}
+        status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
+        self.assertEquals(status, 200)
+
+        new_data = {'name': 'test', 'xxx': 'xxx'}
+        status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
+        self.assertEquals(status, 400)
+
+        new_data = {'name': 'test'}
+        status, _ = await self.api_request('PATCH', f'/imports//citizens/1', new_data)
+        self.assertEquals(status, 404)
+
+        new_data = {'name': 'test'}
+        status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/', new_data)
+        self.assertEquals(status, 404)
 
     @unittest_run_loop
     async def test_no_new_values(self):
