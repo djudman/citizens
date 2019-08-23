@@ -19,7 +19,8 @@ setup(
         ('configs', ['configs/nginx.conf', 'configs/supervisor.conf']),
         ('static', ['static/robots.txt']),
         ('.', ['citizens.config.json', 'install.sh', 'requirements.txt',
-               'README.md', 'LICENSE', 'Makefile'])
+               'README.md', 'LICENSE', 'Makefile', 'Dockerfile', 'entrypoint.sh',
+               'run-with-docker.sh'])
     ],
     license='MIT',
     platforms=['Ubuntu >= 18.04'],
