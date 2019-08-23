@@ -32,7 +32,7 @@ async def errors_middleware(request, handler):
     try:
         response = await handler(request)
     except Exception as e:
-        message = '`{0} {1}` failed. {2}'.format(request.method, request.url, e)
+        message = '{0} {1} failed. {2}'.format(request.method, request.url, e)
         request.app.logger.error(message, exc_info=True)
         if type(e) in (CitizensBadRequest, ImportNotFound):
             raise web.HTTPBadRequest()

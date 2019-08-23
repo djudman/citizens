@@ -23,7 +23,7 @@ async def new_import(request):
     try:
         validate_citizens(citizens)
     except DataValidationError as e:
-        raise CitizensBadRequest('Invalid citizens data') from e
+        raise CitizensBadRequest(str(e))
     import_id = await request.app.storage.import_citizens(citizens)
     out = {'data': {'import_id': import_id}}
     return web.json_response(data=out, status=201)
@@ -41,7 +41,7 @@ async def update_citizen(request):
     try:
         CitizenSchema().validate(values, partial=True)
     except DataValidationError as e:
-        raise CitizensBadRequest('Invalid values') from e
+        raise CitizensBadRequest(str(e))
     storage = request.app.storage
     if 'relatives' in values:
         new_relatives = values['relatives']
