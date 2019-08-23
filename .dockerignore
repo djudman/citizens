@@ -1,0 +1,6 @@
+venv
+.idea
+logs
+tests
+*.tar.gz
+*.code-workspace
