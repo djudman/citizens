@@ -9,7 +9,7 @@ from citizens.storage import AsyncMongoStorage
 
 class CitizensApiTestCase(AioHTTPTestCase):
     async def get_application(self):
-        api = CitizensRestApi()
+        api = CitizensRestApi(nolog=True)
         self.app = api._app
         storage_config = api._config['storage']
         storage_config['db'] = 'test_{0}'.format(storage_config['db'])

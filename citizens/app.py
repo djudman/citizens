@@ -60,8 +60,10 @@ async def logging_middleware(request, handler):
 
 
 class CitizensRestApi:
-    def __init__(self):
+    def __init__(self, nolog=False):
         self._logger = logging.getLogger('citizens')
+        if nolog:
+            self._logger.disabled = True
         config_filepath = join(dirname(dirname(__file__)), 'citizens.config.json')
         self._config = self._load_config(config_filepath)
         self._unix_socket = None
