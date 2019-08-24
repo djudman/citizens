@@ -23,13 +23,13 @@ class TestGetPresentsByMonth(CitizensApiTestCase):
         ])
         status, data = await self.api_request(
             'GET', f'/imports/{import_id}/citizens/birthdays')
-        self.assertEquals(status, 200)
+        self.assertEqual(status, 200)
 
         presents_by_month = data['data']
         stat = presents_by_month['6']
-        self.assertEquals(len(stat), 1)
-        self.assertEquals(stat[0]['citizen_id'], 1)
-        self.assertEquals(stat[0]['presents'], 1)
+        self.assertEqual(len(stat), 1)
+        self.assertEqual(stat[0]['citizen_id'], 1)
+        self.assertEqual(stat[0]['presents'], 1)
 
         empty_months = [str(i + 1) for i in range(12) if (i + 1) != 6]
         for month in empty_months:
@@ -76,13 +76,13 @@ class TestGetPresentsByMonth(CitizensApiTestCase):
         ])
         status, data = await self.api_request(
             'GET', f'/imports/{import_id}/citizens/birthdays')
-        self.assertEquals(status, 200)
+        self.assertEqual(status, 200)
 
         presents_by_month = data['data']
         stat = presents_by_month['3']
-        self.assertEquals(len(stat), 1)
-        self.assertEquals(stat[0]['citizen_id'], 1)
-        self.assertEquals(stat[0]['presents'], 2)
+        self.assertEqual(len(stat), 1)
+        self.assertEqual(stat[0]['citizen_id'], 1)
+        self.assertEqual(stat[0]['presents'], 2)
 
     @unittest_run_loop
     async def test_citizen_birthdays(self):
@@ -134,7 +134,7 @@ class TestGetPresentsByMonth(CitizensApiTestCase):
         ])
         status, data = await self.api_request(
             'GET', f'/imports/{import_id}/citizens/birthdays')
-        self.assertEquals(status, 200)
+        self.assertEqual(status, 200)
         self.assertIsNotNone(data)
         self.assertIn('data', data)
 
@@ -146,34 +146,34 @@ class TestGetPresentsByMonth(CitizensApiTestCase):
             self.assertIn(month, presents_by_month)
 
         stat = sorted(presents_by_month['1'], key=lambda data: data['citizen_id'])
-        self.assertEquals(len(stat), 3)
-        self.assertEquals(stat[0]['citizen_id'], 1)
-        self.assertEquals(stat[0]['presents'], 2)
-        self.assertEquals(stat[1]['citizen_id'], 2)
-        self.assertEquals(stat[1]['presents'], 1)
-        self.assertEquals(stat[2]['citizen_id'], 4)
-        self.assertEquals(stat[2]['presents'], 1)
+        self.assertEqual(len(stat), 3)
+        self.assertEqual(stat[0]['citizen_id'], 1)
+        self.assertEqual(stat[0]['presents'], 2)
+        self.assertEqual(stat[1]['citizen_id'], 2)
+        self.assertEqual(stat[1]['presents'], 1)
+        self.assertEqual(stat[2]['citizen_id'], 4)
+        self.assertEqual(stat[2]['presents'], 1)
 
-        self.assertEquals(len(presents_by_month['2']), 0)
-        self.assertEquals(len(presents_by_month['3']), 0)
+        self.assertEqual(len(presents_by_month['2']), 0)
+        self.assertEqual(len(presents_by_month['3']), 0)
 
         stat = sorted(presents_by_month['4'], key=lambda data: data['citizen_id'])
-        self.assertEquals(len(stat), 2)
-        self.assertEquals(stat[0]['citizen_id'], 3)
-        self.assertEquals(stat[0]['presents'], 1)
-        self.assertEquals(stat[1]['citizen_id'], 4)
-        self.assertEquals(stat[1]['presents'], 1)
+        self.assertEqual(len(stat), 2)
+        self.assertEqual(stat[0]['citizen_id'], 3)
+        self.assertEqual(stat[0]['presents'], 1)
+        self.assertEqual(stat[1]['citizen_id'], 4)
+        self.assertEqual(stat[1]['presents'], 1)
 
         stat = sorted(presents_by_month['5'], key=lambda data: data['citizen_id'])
-        self.assertEquals(len(stat), 1)
-        self.assertEquals(stat[0]['citizen_id'], 3)
-        self.assertEquals(stat[0]['presents'], 1)
+        self.assertEqual(len(stat), 1)
+        self.assertEqual(stat[0]['citizen_id'], 3)
+        self.assertEqual(stat[0]['presents'], 1)
 
         for month in range(6, 13):
-            self.assertEquals(len(presents_by_month[str(month)]), 0)
+            self.assertEqual(len(presents_by_month[str(month)]), 0)
 
     @unittest_run_loop
     async def test_import_does_not_exists(self):
         import_id = 100
         status, _ = await self.api_request('GET', f'/imports/{import_id}/citizens/birthdays')
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)

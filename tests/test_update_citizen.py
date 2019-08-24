@@ -39,29 +39,29 @@ class TestUpdateCitizen(CitizensApiTestCase):
             'relatives': [],
         }
         status, data = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
-        self.assertEquals(status, 200)
+        self.assertEqual(status, 200)
         self.assertIsNotNone(data)
         self.assertIn('data', data)
         response_data = data['data']
         self.assertIsInstance(response_data, dict)
 
-        self.assertEquals(response_data['citizen_id'], 1)
-        self.assertEquals(response_data['apartment'], 777)
-        self.assertEquals(response_data['birth_date'], '18.04.1997')
-        self.assertEquals(response_data['relatives'], [])
-        self.assertEquals(response_data['gender'], 'male')
+        self.assertEqual(response_data['citizen_id'], 1)
+        self.assertEqual(response_data['apartment'], 777)
+        self.assertEqual(response_data['birth_date'], '18.04.1997')
+        self.assertEqual(response_data['relatives'], [])
+        self.assertEqual(response_data['gender'], 'male')
 
         citizens = list(await self.app.storage.get_citizens(import_id))
         citizens = sorted(citizens, key=lambda x: x['citizen_id'])  # для удобства тестирования
-        self.assertEquals(citizens[0]['citizen_id'], 1)
-        self.assertEquals(citizens[0]['apartment'], 777)
-        self.assertEquals(citizens[0]['birth_date'], '18.04.1997')
-        self.assertEquals(len(citizens[0]['relatives']), 0)
+        self.assertEqual(citizens[0]['citizen_id'], 1)
+        self.assertEqual(citizens[0]['apartment'], 777)
+        self.assertEqual(citizens[0]['birth_date'], '18.04.1997')
+        self.assertEqual(len(citizens[0]['relatives']), 0)
 
-        self.assertEquals(citizens[1]['citizen_id'], 2)
-        self.assertEquals(citizens[1]['apartment'], 8)
-        self.assertEquals(citizens[1]['birth_date'], '07.05.1987')
-        self.assertEquals(len(citizens[1]['relatives']), 0)
+        self.assertEqual(citizens[1]['citizen_id'], 2)
+        self.assertEqual(citizens[1]['apartment'], 8)
+        self.assertEqual(citizens[1]['birth_date'], '07.05.1987')
+        self.assertEqual(len(citizens[1]['relatives']), 0)
 
     @unittest_run_loop
     async def test_update_relatives(self):
@@ -94,14 +94,14 @@ class TestUpdateCitizen(CitizensApiTestCase):
             'relatives': [2],
         }
         status, data = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
-        self.assertEquals(status, 200)
+        self.assertEqual(status, 200)
         response_data = data['data']
         self.assertEqual(response_data['relatives'], [2])
         citizens = list(await self.app.storage.get_citizens(import_id))
-        self.assertEquals(citizens[0]['citizen_id'], 1)
-        self.assertEquals(citizens[0]['relatives'], [2])
-        self.assertEquals(citizens[1]['citizen_id'], 2)
-        self.assertEquals(citizens[1]['relatives'], [1])
+        self.assertEqual(citizens[0]['citizen_id'], 1)
+        self.assertEqual(citizens[0]['relatives'], [2])
+        self.assertEqual(citizens[1]['citizen_id'], 2)
+        self.assertEqual(citizens[1]['relatives'], [1])
 
     @unittest_run_loop
     async def test_birth_date_invalid_format(self):
@@ -124,7 +124,7 @@ class TestUpdateCitizen(CitizensApiTestCase):
             'birth_date': '18/04/1997',
         }
         status, data = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)
 
     @unittest_run_loop
     async def test_not_mutual_relatives(self):
@@ -146,7 +146,7 @@ class TestUpdateCitizen(CitizensApiTestCase):
             'relatives': [2],
         }
         status, data = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)
 
     @unittest_run_loop
     async def test_self_in_relatives(self):
@@ -168,8 +168,8 @@ class TestUpdateCitizen(CitizensApiTestCase):
             'relatives': [1],
         }
         status, data = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
-        self.assertEquals(status, 200)
-        self.assertEquals(data['data']['relatives'], [1])
+        self.assertEqual(status, 200)
+        self.assertEqual(data['data']['relatives'], [1])
 
 
     @unittest_run_loop
@@ -192,7 +192,7 @@ class TestUpdateCitizen(CitizensApiTestCase):
             'name': 'Алексей',
         }
         status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)
 
     @unittest_run_loop
     async def test_update_not_existent_citizen(self):
@@ -213,7 +213,7 @@ class TestUpdateCitizen(CitizensApiTestCase):
             'name': 'Алексей',
         }
         status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/2', new_data)
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)
     
     @unittest_run_loop
     async def test_set_empty_name(self):
@@ -234,7 +234,7 @@ class TestUpdateCitizen(CitizensApiTestCase):
             'name': '',
         }
         status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)
 
     @unittest_run_loop
     async def test_set_invalid_field(self):
@@ -253,23 +253,23 @@ class TestUpdateCitizen(CitizensApiTestCase):
         ])
         new_data = {'xxx': 'xxx'}
         status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)
 
         new_data = {'name': 'test'}
         status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
-        self.assertEquals(status, 200)
+        self.assertEqual(status, 200)
 
         new_data = {'name': 'test', 'xxx': 'xxx'}
         status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)
 
         new_data = {'name': 'test'}
         status, _ = await self.api_request('PATCH', f'/imports//citizens/1', new_data)
-        self.assertEquals(status, 404)
+        self.assertEqual(status, 404)
 
         new_data = {'name': 'test'}
         status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/', new_data)
-        self.assertEquals(status, 404)
+        self.assertEqual(status, 404)
 
     @unittest_run_loop
     async def test_no_new_values(self):
@@ -288,4 +288,4 @@ class TestUpdateCitizen(CitizensApiTestCase):
         ])
         new_data = {}
         status, _ = await self.api_request('PATCH', f'/imports/{import_id}/citizens/1', new_data)
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)

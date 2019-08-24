@@ -31,7 +31,7 @@ class TestImport(CitizensApiTestCase):
             }
         ]
         status, data = await self.api_request('POST', '/imports', {'citizens': citizens})
-        self.assertEquals(status, 201)
+        self.assertEqual(status, 201)
         self.assertIsNotNone(data)
         self.assertIn('data', data)
         self.assertIn('import_id', data['data'])
@@ -40,11 +40,11 @@ class TestImport(CitizensApiTestCase):
         self.assertIsInstance(import_id, int)
 
         citizens = list(await self.app.storage.get_citizens(import_id))
-        self.assertEquals(citizens[0]['citizen_id'], 1)
-        self.assertEquals(citizens[0]['name'], 'Иванов Сергей Иванович')
+        self.assertEqual(citizens[0]['citizen_id'], 1)
+        self.assertEqual(citizens[0]['name'], 'Иванов Сергей Иванович')
 
-        self.assertEquals(citizens[1]['citizen_id'], 2)
-        self.assertEquals(citizens[1]['name'], 'Иванов Иван Иванович')
+        self.assertEqual(citizens[1]['citizen_id'], 2)
+        self.assertEqual(citizens[1]['name'], 'Иванов Иван Иванович')
 
     @unittest_run_loop
     async def test_birth_date_invalid_format(self):
@@ -62,7 +62,7 @@ class TestImport(CitizensApiTestCase):
             },
         ]
         status, _ = await self.api_request('POST', '/imports', {'citizens': citizens})
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)
 
     @unittest_run_loop
     async def test_birth_date_is_not_exists(self):
@@ -80,7 +80,7 @@ class TestImport(CitizensApiTestCase):
             },
         ]
         status, _ = await self.api_request('POST', '/imports', {'citizens': citizens})
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)
 
     @unittest_run_loop
     async def test_relative_not_found_in_import(self):
@@ -98,7 +98,7 @@ class TestImport(CitizensApiTestCase):
             },
         ]
         status, _ = await self.api_request('POST', '/imports', {'citizens': citizens})
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)
 
     @unittest_run_loop
     async def test_relative_is_not_mutual(self):
@@ -127,7 +127,7 @@ class TestImport(CitizensApiTestCase):
             },
         ]
         status, _ = await self.api_request('POST', '/imports', {'citizens': citizens})
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)
 
     @unittest_run_loop
     async def test_not_unique_citizen_id(self):
@@ -156,12 +156,12 @@ class TestImport(CitizensApiTestCase):
             }
         ]
         status, _ = await self.api_request('POST', '/imports', {'citizens': citizens})
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)
 
     @unittest_run_loop
     async def test_empty_input_data(self):
         status, _ = await self.api_request('POST', '/imports', {})
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)
 
     @unittest_run_loop
     async def test_redundant_field(self):
@@ -180,7 +180,7 @@ class TestImport(CitizensApiTestCase):
             },
         ]
         status, _ = await self.api_request('POST', '/imports', {'citizens': citizens})
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)
 
     @unittest_run_loop
     async def test_no_field(self):
@@ -198,4 +198,4 @@ class TestImport(CitizensApiTestCase):
             },
         ]
         status, _ = await self.api_request('POST', '/imports', {'citizens': citizens})
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)

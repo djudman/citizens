@@ -73,4 +73,4 @@ class TestMongoStorage(unittest.TestCase):
     async def test_import_does_not_exists(self):
         with self.assertRaises(ImportNotFound) as ctx:
             _ = list(await self.storage.get_citizens(999))
-        self.assertEquals(str(ctx.exception), 'Import `999` does not exists.')
+        self.assertEqual(str(ctx.exception), 'Import `999` does not exists.')

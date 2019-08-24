@@ -43,27 +43,27 @@ class TestGetAgePercentiles(CitizensApiTestCase):
         import_id = await self.import_data(citizens)
         status, data = await self.api_request(
             'GET', f'/imports/{import_id}/towns/stat/percentile/age')
-        self.assertEquals(status, 200)
+        self.assertEqual(status, 200)
         self.assertIsNotNone(data)
         self.assertIn('data', data)
 
         stat = data['data']
         self.assertIsInstance(stat, list)
-        self.assertEquals(len(stat), 2)
+        self.assertEqual(len(stat), 2)
 
-        self.assertEquals(stat[0]['town'], 'Москва')
-        self.assertEquals(stat[0]['p50'], 20)
-        self.assertEquals(stat[0]['p75'], 41)
-        self.assertEquals(stat[0]['p99'], 61.16)
+        self.assertEqual(stat[0]['town'], 'Москва')
+        self.assertEqual(stat[0]['p50'], 20)
+        self.assertEqual(stat[0]['p75'], 41)
+        self.assertEqual(stat[0]['p99'], 61.16)
 
-        self.assertEquals(stat[1]['town'], 'Санкт-Петербург')
-        self.assertEquals(stat[1]['p50'], 32)
-        self.assertEquals(stat[1]['p75'], 59)
-        self.assertEquals(stat[1]['p99'], 64.76)
+        self.assertEqual(stat[1]['town'], 'Санкт-Петербург')
+        self.assertEqual(stat[1]['p50'], 32)
+        self.assertEqual(stat[1]['p75'], 59)
+        self.assertEqual(stat[1]['p99'], 64.76)
 
     @unittest_run_loop
     async def test_import_does_not_exists(self):
         import_id = 100
         status, _ = await self.api_request(
             'GET', f'/imports/{import_id}/towns/stat/percentile/age')
-        self.assertEquals(status, 400)
+        self.assertEqual(status, 400)
