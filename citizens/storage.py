@@ -132,16 +132,19 @@ class AsyncMongoStorage(BaseCitizensStorage):
             old_relatives = old_data['relatives']
             # NOTE: Удаляем на той стороне меня из relatives
             for rid in old_relatives:
-                if rid not in new_relatives:
+                if rid != citizen_id and rid not in new_relatives:
                     try:
                         await self._delete_relative(import_id, rid, citizen_id)
                     except CitizenNotFound as e:
+                        # NOTE: перед вызовом этого метода мы уже убедились,
+                        # что родственники существуют, и (по условию) мы их не удаляем,
+                        # так что по идее сюда попасть не можем, однако в общем случае:
                         # TODO: откатить обновленные данные. 
                         # Но вот только их кто-нибудь может успеть обновить ещё раз
                         raise RelativeNotFound(f'Relative `{rid}` not found.') from e
             # NOTE: Добавляем на той стороне меня в relatives
             for rid in new_relatives:
-                if rid not in old_relatives:
+                if rid != citizen_id and rid not in old_relatives:
                     try:
                         await self._add_relative(import_id, rid, citizen_id)
                     except CitizenNotFound as e:
