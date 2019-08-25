@@ -37,11 +37,8 @@ def clear_cache(handler):
         if not hasattr(request.app, 'cache'):
             return await handler(request)
         import_id = int(request.match_info['import_id'])
-        response = await handler(request)
-        cache = request.app.cache
-        if cache:
-            cache.clear(import_id)
-        return response
+        request.app.cache.clear(import_id)
+        return await handler(request)
     return wrapper
 
 
