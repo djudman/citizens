@@ -85,7 +85,7 @@ class CitizensFileCache:
         if exists(import_cache_dir):
             try:
                 shutil.rmtree(import_cache_dir)
-            except OSError:
+            except FileNotFoundError:
                 self._logger.error(f'Failed delete directory `{import_cache_dir}`', exc_info=True)
 
     def close(self):
@@ -93,5 +93,5 @@ class CitizensFileCache:
         if exists(cache_dir):
             try:
                 shutil.rmtree(cache_dir)
-            except OSError:
+            except FileNotFoundError:
                 self._logger.error(f'Failed delete directory `{cache_dir}`', exc_info=True)
