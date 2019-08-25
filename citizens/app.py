@@ -14,6 +14,7 @@ from citizens.api import (
     CitizensBadRequest, new_import, update_citizen, get_citizens,
     get_presents_by_month, get_age_percentiles
 )
+from citizens.cache import citizens_cache_setup
 from citizens.storage import AsyncMongoStorage, ImportNotFound
 
 
@@ -98,6 +99,8 @@ class CitizensRestApi:
             middlewares.append(logging_middleware)
         app = web.Application(logger=self._logger, middlewares=middlewares, client_max_size=client_body_max_size)
         aiojobs_setup(app)
+        if self._config.get('use_cache'):
+            citizens_cache_setup(app)
         storage_config = self._config['storage']
         # TODO: тут можно брать класс из конфига и создавать обект указанного в конфиге класса
         app.storage = AsyncMongoStorage(storage_config)

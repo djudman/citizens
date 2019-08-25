@@ -4,6 +4,7 @@ import numpy as np
 from aiohttp import web
 from aiojobs.aiohttp import atomic
 
+from citizens.cache import use_cache, clear_cache
 from citizens.schema import (
     validate_citizens, CitizenSchema, DataValidationError
 )
@@ -30,6 +31,7 @@ async def new_import(request):
 
 
 @atomic
+@clear_cache
 async def update_citizen(request):
     import_id = int(request.match_info['import_id'])
     citizen_id = int(request.match_info['citizen_id'])
@@ -59,12 +61,14 @@ async def update_citizen(request):
     return web.json_response(data={'data': updated_data})
 
 
+@use_cache('get_citizens')
 async def get_citizens(request):
     import_id = int(request.match_info['import_id'])
     citizens = list(await(request.app.storage.get_citizens(import_id)))
     return web.json_response(data={'data': citizens})
 
 
+@use_cache('get_presents_by_month')
 async def get_presents_by_month(request):
     import_id = int(request.match_info['import_id'])
     report = await request.app.storage.get_presents_by_month(import_id)
@@ -75,6 +79,7 @@ async def get_presents_by_month(request):
     return web.json_response(data={'data': presents_by_month})
 
 
+@use_cache('get_age_percentiles')
 async def get_age_percentiles(request):
     import_id = int(request.match_info['import_id'])
     report = await request.app.storage.get_ages_by_town(import_id)
